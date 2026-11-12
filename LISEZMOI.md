@@ -13,7 +13,7 @@ Les activités 2 à 5 (labyrinthe, coquillages, pixels en binaire, formes) sont 
 ## Ajouter un niveau
 
 1. Ouvrez `tarta.html` et ajoutez un objet dans le tableau `NIVEAUX`.
-2. Donnez-lui un `id`, une grille de 8 lignes, un `depart`, un `but`, un `maxBlocs`, un titre et une clé d’indice.
+2. Donnez-lui un `id`, une grille de 8 lignes, un `depart`, un `but`, un titre et une clé d’indice. `maxBlocs` est facultatif : il limite le nombre de blocs du programme (sans lui, pas de limite).
 3. Ajoutez les textes correspondants dans `TEXTES.fr`, puis vérifiez la grille et les coordonnées.
 
 La grille utilise `.` pour le sable, `#` pour un rocher, `S` pour le départ et `M` pour la mer. Le moteur parcourt automatiquement les niveaux et le bouton de niveau suivant devient disponible dès qu’il y en a plusieurs.

@@ -48,7 +48,10 @@
     .conteneur-boucle { min-height:2.6rem; padding:.35rem; border:2px dashed #c79d38; border-radius:.5rem; display:flex; flex-direction:column; gap:.4rem; }
     .conteneur-boucle.cible-active { border-color:var(--corail); background:#fff3e7; }
     .conteneur-boucle:empty::after { content:""; }
-    .programme { min-height:19rem; padding:.8rem; border:3px dashed #b7c9c4; border-radius:.8rem; background:#f7fbf4; }
+    .zone-programme { display:flex; flex-direction:column; max-height:calc(100vh - 7rem); }
+    .programme { flex:1 1 auto; min-height:12rem; overflow-y:auto; overscroll-behavior:contain; padding:.8rem; border:3px dashed #b7c9c4; border-radius:.8rem; background:#f7fbf4; }
+    .zone-programme > .compteur, .zone-programme > #niveau-suivant { flex:none; }
+    .entete-boucle .supprimer { margin-left:.2rem; }
     .programme .bloc { width:fit-content; max-width:100%; }
     .programme > .bloc { margin-bottom:.45rem; }
     .programme > .bloc:not(.boucle), .conteneur-boucle > .bloc:not(.boucle) { width:100%; }
@@ -58,6 +61,7 @@
     .aide { margin:1rem 0 0; padding:.8rem; border-left:5px solid var(--corail); background:#fff2da; border-radius:.4rem; }
     footer { max-width:1500px; margin:auto; padding:0 1rem 1rem; font-size:.85rem; text-align:center; opacity:.8; }
     .cache { display:none !important; }
+    @media (min-width:901px) { .zone-programme { position:sticky; top:1rem; } }
     @media (max-width:900px) { main { grid-template-columns:1fr 1fr; } .zone.grille-zone { grid-column:1 / -1; } }
     @media (max-width:620px) { header { align-items:flex-start; flex-direction:column; } .top-actions { justify-content:flex-start; } main { grid-template-columns:1fr; padding:.7rem; } .zone.grille-zone { grid-column:auto; } .panneau { padding:.8rem; } button { min-height:2.8rem; } }
   </style>
@@ -230,15 +234,15 @@
       <div class="aide"><strong id="indice-titre"></strong><span id="indice"></span></div>
     </section>
     <section class="zone panneau"><h2 id="boite-titre"></h2><p id="boite-explication"></p><div class="bibliotheque" id="bibliotheque"></div></section>
-    <section class="zone panneau"><h2 id="programme-titre"></h2><div class="programme" id="programme"></div><p class="compteur" id="compteur"></p><button class="secondary" id="niveau-suivant"></button></section>
+    <section class="zone panneau zone-programme"><h2 id="programme-titre"></h2><div class="programme" id="programme"></div><p class="compteur" id="compteur"></p><button class="secondary" id="niveau-suivant"></button></section>
   </main>
   <footer id="pied"></footer>
   <script>
     "use strict";
     const TEXTES = {
       fr: {
-        titre_jeu:"Tarta na Praia", niveau:"Niveau 1", niveau_2:"Niveau 2", consigne:"Aide Tarta à rejoindre la mer !", indice_titre:"Indice : ", indice_niveau_1:"Utilise la boucle pour avancer plus vite sur le sable.", indice_niveau_2:"Les rochers bloquent le chemin. Il te faudra deux boucles !",
-        boite_titre:"Boîte à blocs", boite_explication:"Clique dans une boucle, puis clique sur un bloc pour l’y placer. Tu peux aussi le faire glisser.", programme_titre:"Ton programme", lancer:"Lancer Tarta", recommencer:"Recommencer", effacer_progression:"Effacer la progression", langue:"Langue", langue_fr:"FR", blocs_utilises:"Blocs utilisés : {utilises} / {max}",
+        titre_jeu:"Tarta na Praia", niveau:"Niveau 1", niveau_2:"Niveau 2", consigne:"Aide Tarta à rejoindre la mer !", indice_titre:"Indice : ", indice_niveau_1:"Utilise la boucle pour avancer plus vite sur le sable.", indice_niveau_2:"Les rochers bloquent le chemin. Essaie avec deux boucles !",
+        boite_titre:"Boîte à blocs", boite_explication:"Clique dans une boucle, puis clique sur un bloc pour l’y placer. Tu peux aussi le faire glisser.", programme_titre:"Ton programme", lancer:"Lancer Tarta", recommencer:"Recommencer", effacer_progression:"Effacer la progression", langue:"Langue", langue_fr:"FR", blocs_utilises:"Blocs utilisés : {utilises} / {max}", blocs_utilises_sans_limite:"Blocs utilisés : {utilises}",
         quand_execute:"quand on exécute", nord:"Nord", sud:"Sud", est:"Est", ouest:"Ouest", repeter:"répéter", fois:"fois", ajouter:"Ajouter", niveau_suivant:"Niveau suivant", rejouer:"Rejouer", pied:"Un jeu de programmation par blocs, créé pour jouer hors ligne.",
         succes:"Bravo ! Tarta est dans la mer !", passage_niveau:"Le niveau suivant arrive…", tous_niveaux_termines:"Bravo ! Tu as terminé tous les niveaux !", echec:"Oh non, Tarta n'est pas arrivée à la mer. Essaie encore !", progression_effacee:"Progression effacée.", niveau_debloque:"Niveau terminé !", erreur_langue:"Langue indisponible, retour au français.", retour_index:"Retour à l'accueil", supprimer:"Supprimer", aria_grille:"Plage, grille 8 par 8", aria_bloc:"Bloc {nom}", plage:"Mer"
       }
@@ -260,7 +264,7 @@
         [2,1,"rocher-2"],[3,3,"rocher-3"],[4,2,"rocher-1"],[5,6,"rocher-2"],
         [6,0,"palmier"],[3,7,"palmier"],[7,6,"coquillages"],[2,6,"etoile-de-mer"],[5,4,"traces-pas"]
       ],
-      depart:{ligne:7,colonne:5}, but:{ligne:1,colonne:5}, maxBlocs:4, indice:"indice_niveau_1", titre:"niveau"
+      depart:{ligne:7,colonne:5}, but:{ligne:1,colonne:5}, indice:"indice_niveau_1", titre:"niveau"
     }, {
       id:"niveau-2",
       grille:["........","......M.","........","........","........","........","........",".S......"],
@@ -278,7 +282,7 @@
         [4,1,"rocher-1"],[4,2,"rocher-3"],[3,4,"rocher-2"],[5,4,"rocher-2"],[3,7,"rocher-1"],
         [6,0,"palmier"],[2,2,"etoile-de-mer"],[6,3,"coquillages"],[7,0,"traces-pas"]
       ],
-      depart:{ligne:7,colonne:1}, but:{ligne:1,colonne:6}, maxBlocs:4, indice:"indice_niveau_2", titre:"niveau_2"
+      depart:{ligne:7,colonne:1}, but:{ligne:1,colonne:6}, indice:"indice_niveau_2", titre:"niveau_2"
     }];
     const directions = { nord:{ligne:-1,colonne:0}, sud:{ligne:1,colonne:0}, est:{ligne:0,colonne:1}, ouest:{ligne:0,colonne:-1} };
     const stockage = "tarta-na-praia-progression";
@@ -300,20 +304,22 @@
     function fabriquerBloc(type, options={}) { const bloc=document.createElement("div"); bloc.className=`bloc ${type=== "boucle" ? "boucle":"direction"}`; bloc.dataset.type=type; bloc.draggable=true; bloc.setAttribute("role","button"); bloc.setAttribute("aria-label",t("aria_bloc",{nom:type==="depart"?t("quand_execute"):type==="boucle"?t("repeter"):t(type)})); if(type!=="boucle" && type!=="depart") { bloc.textContent={nord:"↑ ",sud:"↓ ",est:"→ ",ouest:"← "}[type]+t(type); } else if(type==="boucle") { const entete=document.createElement("div"); entete.className="entete-boucle"; entete.append("↻ ",t("repeter")); const repeteur=document.createElement("span"); repeteur.className="repeteur"; const moins=document.createElement("button"); moins.type="button"; moins.textContent="−"; moins.setAttribute("aria-label","−"); const valeur=document.createElement("output"); valeur.textContent=options.repetitions||1; const plus=document.createElement("button"); plus.type="button"; plus.textContent="+"; plus.setAttribute("aria-label","+"); moins.addEventListener("click",e=>{e.stopPropagation(); valeur.value=Math.max(1,Number(valeur.value)-1); programme=serialiserProgramme();}); plus.addEventListener("click",e=>{e.stopPropagation(); valeur.value=Math.min(9,Number(valeur.value)+1); programme=serialiserProgramme();}); repeteur.append(moins,valeur,plus); entete.append(repeteur); bloc.append(entete); const contenu=document.createElement("div"); contenu.className="conteneur-boucle"; bloc.append(contenu); } ajouterInteractions(bloc); return bloc; }
     function ajouterInteractions(bloc) { bloc.addEventListener("dragstart",e=>{ bloc.dataset.drague="oui"; e.dataTransfer.setData("text/plain",bloc.dataset.type); e.dataTransfer.effectAllowed="copy"; }); bloc.addEventListener("dragend",()=>setTimeout(()=>delete bloc.dataset.drague,1000)); bloc.addEventListener("click",()=>{ if(bloc.dataset.drague) { delete bloc.dataset.drague; return; } if(!execution && !bloc.closest("#programme")) ajouterAuProgramme(bloc.dataset.type); }); }
     function construireBibliotheque() { const b=el("bibliotheque"); b.innerHTML=""; ["nord","sud","est","ouest","boucle"].forEach(type=>b.append(fabriquerBloc(type))); }
-    function ajouterAuProgramme(type, cible=cibleActive || el("programme"), repetitions=1) { if(compterBlocs(programme)>=niveau().maxBlocs) return; const bloc=fabriquerBloc(type,{repetitions}); ajouterBoutonSuppression(bloc); cible.append(bloc); if(type==="boucle") { const contenu=bloc.querySelector(".conteneur-boucle"); installerZoneDepot(contenu); installerCibleClique(contenu); } programme=serialiserProgramme(); afficherCompteur(); }
+    function ajouterAuProgramme(type, cible=cibleActive || el("programme"), repetitions=1) { if(limiteAtteinte()) return; const bloc=fabriquerBloc(type,{repetitions}); ajouterBoutonSuppression(bloc); cible.append(bloc); if(type==="boucle") { const contenu=bloc.querySelector(".conteneur-boucle"); installerZoneDepot(contenu); installerCibleClique(contenu); } programme=serialiserProgramme(); afficherCompteur(); rendreVisible(bloc); }
+    function limiteAtteinte() { return niveau().maxBlocs !== undefined && compterBlocs(programme)>=niveau().maxBlocs; }
     function compterBlocs(noeuds=programme) { return noeuds.reduce((total,noeud)=>total+1+(noeud.type==="boucle"?compterBlocs(noeud.enfants):0),0); }
     function serialiserProgramme(conteneur=el("programme")) { return [...conteneur.children].filter(n=>n.dataset.type && n.dataset.type!=="depart").map(n=>({type:n.dataset.type,repetitions:n.dataset.type==="boucle"?Number(n.querySelector("output").value):undefined,enfants:n.dataset.type==="boucle"?serialiserProgramme(n.querySelector(".conteneur-boucle")):[]})); }
     function rendreProgramme() { const zone=el("programme"); zone.innerHTML=""; const depart=fabriquerBloc("depart"); depart.dataset.type="depart"; depart.draggable=false; depart.className="bloc"; depart.textContent=t("quand_execute"); zone.append(depart); programme.forEach(noeud=>zone.append(rendreNoeud(noeud))); installerZoneDepot(zone); afficherCompteur(); }
-    function ajouterBoutonSuppression(bloc) { const bouton=document.createElement("button"); bouton.type="button"; bouton.className="supprimer"; bouton.textContent="×"; bouton.setAttribute("aria-label",t("supprimer")); bouton.title=t("supprimer"); bouton.addEventListener("click",e=>{ e.stopPropagation(); if(execution) return; bloc.remove(); programme=serialiserProgramme(); afficherCompteur(); }); bloc.append(bouton); }
+    function ajouterBoutonSuppression(bloc) { const bouton=document.createElement("button"); bouton.type="button"; bouton.className="supprimer"; bouton.textContent="×"; bouton.setAttribute("aria-label",t("supprimer")); bouton.title=t("supprimer"); bouton.addEventListener("click",e=>{ e.stopPropagation(); if(execution) return; bloc.remove(); programme=serialiserProgramme(); afficherCompteur(); }); (bloc.querySelector(":scope > .entete-boucle") || bloc).append(bouton); }
     function rendreNoeud(noeud) { const bloc=fabriquerBloc(noeud.type,{repetitions:noeud.repetitions}); if(noeud.type==="boucle") { const contenu=bloc.querySelector(".conteneur-boucle"); noeud.enfants.forEach(enfant=>contenu.append(rendreNoeud(enfant))); installerZoneDepot(contenu); installerCibleClique(contenu); } ajouterBoutonSuppression(bloc); return bloc; }
-    function installerZoneDepot(zone) { if(zone.dataset.depotInstalle==="oui") return; zone.dataset.depotInstalle="oui"; zone.addEventListener("dragover",e=>{e.preventDefault(); e.stopPropagation(); if(compterBlocs(programme)<niveau().maxBlocs) zone.classList.add("drop-active");}); zone.addEventListener("dragleave",()=>zone.classList.remove("drop-active")); zone.addEventListener("drop",e=>{e.preventDefault(); e.stopPropagation(); zone.classList.remove("drop-active"); if(compterBlocs(programme)>=niveau().maxBlocs) return; const type=e.dataTransfer.getData("text/plain"); if(["nord","sud","est","ouest","boucle"].includes(type)) { ajouterAuProgramme(type,zone); } }); }
+    function installerZoneDepot(zone) { if(zone.dataset.depotInstalle==="oui") return; zone.dataset.depotInstalle="oui"; zone.addEventListener("dragover",e=>{e.preventDefault(); e.stopPropagation(); if(!limiteAtteinte()) zone.classList.add("drop-active");}); zone.addEventListener("dragleave",()=>zone.classList.remove("drop-active")); zone.addEventListener("drop",e=>{e.preventDefault(); e.stopPropagation(); zone.classList.remove("drop-active"); if(limiteAtteinte()) return; const type=e.dataTransfer.getData("text/plain"); if(["nord","sud","est","ouest","boucle"].includes(type)) { ajouterAuProgramme(type,zone); } }); }
     function installerCibleClique(zone) { if(zone.dataset.clicInstalle==="oui") return; zone.dataset.clicInstalle="oui"; zone.addEventListener("click",e=>{ e.stopPropagation(); cibleActive=zone; document.querySelectorAll(".conteneur-boucle").forEach(autre=>autre.classList.toggle("cible-active",autre===zone)); }); }
-    function afficherCompteur() { el("compteur").textContent=t("blocs_utilises",{utilises:compterBlocs(programme),max:niveau().maxBlocs}); }
+    function afficherCompteur() { const max=niveau().maxBlocs; el("compteur").textContent=max===undefined?t("blocs_utilises_sans_limite",{utilises:compterBlocs(programme)}):t("blocs_utilises",{utilises:compterBlocs(programme),max}); }
     function annulerPassageAuto() { clearTimeout(minuterieNiveau); minuterieNiveau=null; }
     function allerAuNiveauSuivant() { annulerPassageAuto(); indexNiveau=NIVEAUX.length>1?(indexNiveau+1)%NIVEAUX.length:0; afficherTextes(); reinitialiser(); }
     function reinitialiser() { annulerPassageAuto(); programme=[]; cibleActive=null; position={...niveau().depart}; orientation="nord"; arrivee=false; execution=false; el("statut").className="statut"; el("statut").textContent=""; dessinerGrille(); rendreProgramme(); }
     function pause(ms) { return new Promise(resolve=>setTimeout(resolve,ms)); }
-    function surligner(bloc,on) { bloc.classList.toggle("en-cours",on); }
+    function rendreVisible(bloc) { const zone=el("programme"), z=zone.getBoundingClientRect(), b=bloc.getBoundingClientRect(); if(b.top<z.top) zone.scrollTop-=z.top-b.top+8; else if(b.bottom>z.bottom) zone.scrollTop+=Math.min(b.bottom-z.bottom+8, b.top-z.top-8); } // fait défiler la zone du programme seulement, pas la page
+    function surligner(bloc,on) { bloc.classList.toggle("en-cours",on); if(on) rendreVisible(bloc); }
     async function executerNoeuds(noeuds, elements) { for(let i=0;i<noeuds.length;i++) { const noeud=noeuds[i], bloc=elements[i]; surligner(bloc,true); if(noeud.type==="boucle") { for(let tour=0;tour<noeud.repetitions;tour++) await executerNoeuds(noeud.enfants,[...bloc.querySelector(".conteneur-boucle").children]); } else await deplacer(noeud.type); surligner(bloc,false); if(!execution) return false; } return true; }
     async function deplacer(type) { const niveauActuel=niveau(), delta=directions[type], prochaine={ligne:position.ligne+delta.ligne,colonne:position.colonne+delta.colonne}; await pause(400); orientation=type; if(prochaine.ligne<0||prochaine.ligne>=8||prochaine.colonne<0||prochaine.colonne>=8||niveauActuel.grille[prochaine.ligne][prochaine.colonne]==="#"||objetA(prochaine,niveauActuel)) { placerTarta(); const tortue=el("grille").querySelector(".tarta"); if(tortue) tortue.animate([{transform:"translateX(-5px)"},{transform:"translateX(5px)"},{transform:"translateX(0)"}],{duration:280}); return; } position=prochaine; placerTarta(); }
     async function lancer() { if(execution) return; annulerPassageAuto(); execution=true; if(arrivee) { position={...niveau().depart}; orientation="nord"; arrivee=false; placerTarta(); } el("statut").className="statut"; el("statut").textContent=""; const noeuds=programme; const blocs=[...el("programme").children].slice(1); await executerNoeuds(noeuds,blocs); execution=false; const atteint=position.ligne===niveau().but.ligne&&position.colonne===niveau().but.colonne; if(atteint) { el("statut").className="statut succes"; arrivee=true; placerTarta(); sauvegarder(); if(indexNiveau<NIVEAUX.length-1) { el("statut").textContent=`${t("succes")} ${t("passage_niveau")}`; minuterieNiveau=setTimeout(allerAuNiveauSuivant,DELAI_NIVEAU_SUIVANT); } else el("statut").textContent=t("tous_niveaux_termines"); } else { el("statut").className="statut echec"; el("statut").textContent=t("echec"); } }
