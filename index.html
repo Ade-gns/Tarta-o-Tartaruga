@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tarta-na-Praia</title>
+  <style>
+    :root { --sable:#f7dfaa; --sable-2:#f2d18d; --mer:#35b9d3; --mer-fonce:#1486aa; --roche:#394652; --encre:#173447; --corail:#ef765c; --jaune:#ffd45a; --blanc:#fffdf6; --ombre:0 7px 18px #15344724; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--encre); background:#f4f1df; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem clamp(1rem,3vw,2rem); background:var(--encre); color:var(--blanc); }
+    header h1 { margin:0; font-size:clamp(1.4rem,4vw,2.15rem); }
+    .top-actions { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; justify-content:flex-end; }
+    button, .bloc { font:inherit; }
+    button { border:0; border-radius:999px; padding:.7rem 1rem; font-weight:800; color:var(--encre); background:var(--jaune); box-shadow:var(--ombre); cursor:pointer; touch-action:manipulation; }
+    button:hover, button:focus-visible { filter:brightness(.96); outline:3px solid #fff; outline-offset:2px; }
+    button.secondary { background:var(--blanc); }
+    button.danger { background:#ffc3b7; }
+    main { display:grid; grid-template-columns:minmax(250px,1fr) minmax(220px,.8fr) minmax(250px,1fr); gap:1rem; max-width:1500px; margin:0 auto; padding:1rem; }
+    .zone { min-width:0; }
+    .panneau { background:var(--blanc); border-radius:1.2rem; padding:1rem; box-shadow:var(--ombre); }
+    h2 { margin:.1rem 0 .4rem; font-size:1.2rem; }
+    .consigne { margin:.25rem 0 1rem; font-weight:700; }
+    #grille { display:grid; grid-template-columns:repeat(8,1fr); aspect-ratio:1; width:min(100%,500px); margin:auto; border:5px solid #c49c5a; border-radius:.8rem; overflow:hidden; background:var(--sable); }
+    .case { position:relative; display:grid; place-items:center; border:1px solid #d5b879; background:var(--sable); }
+    .case:nth-child(3n) { background:var(--sable-2); }
+    .case.mer { background:var(--mer); border-color:#67d0df; }
+    .case.rocher { background:var(--sable-2); }
+    .case svg { width:70%; height:70%; }
+    .vagues { color:var(--blanc); opacity:.9; }
+    .panneau-actions { display:flex; justify-content:center; gap:.7rem; flex-wrap:wrap; margin-top:1rem; }
+    .panneau-actions #executer { background:var(--corail); color:var(--blanc); font-size:1.05rem; }
+    .statut { min-height:3.7rem; margin:1rem 0 0; padding:.7rem 1rem; border-radius:.8rem; background:#e6f5e9; font-weight:700; text-align:center; }
+    .statut.echec { background:#fff0df; }
+    .statut.succes { background:#fff3ad; }
+    .bibliotheque { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; }
+    .bloc { user-select:none; touch-action:none; display:flex; align-items:center; gap:.35rem; min-height:3rem; padding:.65rem .85rem; border:3px solid transparent; border-radius:.8rem; background:#e6f5e9; box-shadow:0 3px 0 #9bc8a3; cursor:grab; font-weight:800; }
+    .bloc:active { cursor:grabbing; }
+    .supprimer { margin-left:auto; padding:.15rem .45rem; min-height:2rem; box-shadow:none; background:#ffc3b7; color:var(--encre); }
+    .bloc.direction { background:#c9f0f4; box-shadow:0 3px 0 #77c1cc; }
+    .bloc.boucle { background:#ffeab0; box-shadow:0 3px 0 #e5bc59; border-radius:.8rem 1.3rem 1.3rem .8rem; flex-direction:column; align-items:stretch; min-width:11rem; }
+    .entete-boucle { display:flex; align-items:center; gap:.35rem; }
+    .repeteur { display:flex; align-items:center; gap:.2rem; margin-left:auto; }
+    .repeteur button { min-width:2rem; min-height:2rem; padding:.2rem .55rem; box-shadow:none; }
+    .repeteur output { min-width:1.5rem; text-align:center; }
+    .conteneur-boucle { min-height:2.6rem; padding:.35rem; border:2px dashed #c79d38; border-radius:.5rem; display:flex; flex-direction:column; gap:.4rem; }
+    .conteneur-boucle.cible-active { border-color:var(--corail); background:#fff3e7; }
+    .conteneur-boucle:empty::after { content:""; }
+    .programme { min-height:19rem; padding:.8rem; border:3px dashed #b7c9c4; border-radius:.8rem; background:#f7fbf4; }
+    .programme .bloc { width:fit-content; max-width:100%; }
+    .programme > .bloc { margin-bottom:.45rem; }
+    .programme > .bloc:not(.boucle), .conteneur-boucle > .bloc:not(.boucle) { width:100%; }
+    .drop-active { border-color:var(--corail); background:#fff3e7; }
+    .en-cours { border-color:var(--corail) !important; box-shadow:0 0 0 4px #ef765c66, 0 3px 0 #c85442 !important; }
+    .compteur { margin:.8rem 0 0; text-align:center; font-weight:800; }
+    .aide { margin:1rem 0 0; padding:.8rem; border-left:5px solid var(--corail); background:#fff2da; border-radius:.4rem; }
+    footer { max-width:1500px; margin:auto; padding:0 1rem 1rem; font-size:.85rem; text-align:center; opacity:.8; }
+    .cache { display:none !important; }
+    @media (max-width:900px) { main { grid-template-columns:1fr 1fr; } .zone.grille-zone { grid-column:1 / -1; } }
+    @media (max-width:620px) { header { align-items:flex-start; flex-direction:column; } .top-actions { justify-content:flex-start; } main { grid-template-columns:1fr; padding:.7rem; } .zone.grille-zone { grid-column:auto; } .panneau { padding:.8rem; } button { min-height:2.8rem; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="titre-jeu"></h1>
+    <div class="top-actions"><label for="langues" id="label-langue"></label><select id="langues" aria-label="Langue"></select><button class="secondary" id="effacer"></button></div>
+  </header>
+  <main>
+    <section class="zone grille-zone panneau">
+      <h2 id="titre-niveau"></h2><p class="consigne" id="consigne"></p>
+      <div id="grille" aria-label="Grille de jeu"></div>
+      <div class="panneau-actions"><button id="executer"></button><button class="secondary" id="recommencer"></button></div>
+      <div id="statut" class="statut" role="status"></div>
+      <div class="aide"><strong id="indice-titre"></strong><span id="indice"></span></div>
+    </section>
+    <section class="zone panneau"><h2 id="boite-titre"></h2><p id="boite-explication"></p><div class="bibliotheque" id="bibliotheque"></div></section>
+    <section class="zone panneau"><h2 id="programme-titre"></h2><div class="programme" id="programme"></div><p class="compteur" id="compteur"></p><button class="secondary" id="niveau-suivant"></button></section>
+  </main>
+  <footer id="pied"></footer>
+  <script>
+    "use strict";
+    const TEXTES = {
+      fr: {
+        titre_jeu:"Tarta-na-Praia", niveau:"Niveau 1", consigne:"Aide Tarta à rejoindre la mer !", indice_titre:"Indice : ", indice_niveau_1:"Utilise la boucle pour avancer plus vite sur le sable.",
+        boite_titre:"Boîte à blocs", boite_explication:"Clique dans une boucle, puis clique sur un bloc pour l’y placer. Tu peux aussi le faire glisser.", programme_titre:"Ton programme", lancer:"Lancer Tarta", recommencer:"Recommencer", effacer_progression:"Effacer la progression", langue:"Langue", langue_fr:"FR", blocs_utilises:"Blocs utilisés : {utilises} / {max}",
+        quand_execute:"quand on exécute", nord:"Nord", sud:"Sud", est:"Est", ouest:"Ouest", repeter:"répéter", fois:"fois", ajouter:"Ajouter", niveau_suivant:"Niveau suivant", rejouer:"Rejouer", pied:"Un jeu de programmation par blocs, créé pour jouer hors ligne.",
+        succes:"Bravo ! Tarta est dans la mer !", echec:"Oh non, Tarta n'est pas arrivée à la mer. Essaie encore !", progression_effacee:"Progression effacée.", niveau_debloque:"Niveau terminé !", erreur_langue:"Langue indisponible, retour au français.", supprimer:"Supprimer", aria_grille:"Grille du niveau", aria_bloc:"Bloc {nom}", plage:"Mer"
+      }
+    };
+    const NIVEAUX = [{ id:"niveau-1", grille:[".....M..","........","........","........","........","........",".....S..","........"], depart:{ligne:6,colonne:5}, but:{ligne:0,colonne:5}, maxBlocs:4, indice:"indice_niveau_1", titre:"niveau" }];
+    const directions = { nord:{ligne:-1,colonne:0}, sud:{ligne:1,colonne:0}, est:{ligne:0,colonne:1}, ouest:{ligne:0,colonne:-1} };
+    const stockage = "tarta-na-praia-progression";
+    let langue = "fr", indexNiveau = 0, programme = [], execution = false, position = {...NIVEAUX[0].depart}, cibleActive = null;
+    const el = id => document.getElementById(id);
+    function t(cle, valeurs={}) { const source = TEXTES[langue] || TEXTES.fr; let texte = source[cle]; if (texte === undefined) { console.warn(`Clé de traduction manquante: ${cle}`); texte = TEXTES.fr[cle] ?? cle; } return texte.replace(/\{(\w+)\}/g, (_, nom) => valeurs[nom] ?? `{${nom}}`); }
+    function svgTortue() { return `<svg viewBox="0 0 100 100" aria-label="Tarta" role="img"><ellipse cx="50" cy="53" rx="27" ry="22" fill="#4b9d65" stroke="#173d42" stroke-width="4"/><path d="M37 39l-13-13 2 20M63 39l13-13-2 20M37 67L24 80l3-19M63 67l13 13-3-19" fill="#76bd70" stroke="#173d42" stroke-width="4" stroke-linejoin="round"/><circle cx="50" cy="27" r="13" fill="#8bd277" stroke="#173d42" stroke-width="4"/><circle cx="45" cy="25" r="2.5" fill="#173d42"/><circle cx="55" cy="25" r="2.5" fill="#173d42"/><path d="M45 32q5 5 10 0" fill="none" stroke="#173d42" stroke-width="2" stroke-linecap="round"/><path d="M40 45q10 9 20 0M39 56q11 9 22 0M50 35v38" fill="none" stroke="#285c55" stroke-width="3"/></svg>`; }
+    function svgRocher() { return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M15 76L20 36 44 18 72 25 89 60 78 82 35 87z" fill="#394652" stroke="#26343e" stroke-width="5"/><path d="M29 38l19-10 18 5" fill="none" stroke="#71808a" stroke-width="5" stroke-linecap="round" opacity=".65"/></svg>`; }
+    function svgVagues() { return `<svg class="vagues" viewBox="0 0 100 100" aria-label="${t("plage")}"><path d="M10 35q12-12 24 0t24 0 24 0M8 55q12-12 24 0t24 0 24 0M17 75q12-12 24 0t24 0 18 0" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>`; }
+    function niveau() { return NIVEAUX[indexNiveau]; }
+    function afficherTextes() { document.documentElement.lang = langue; el("titre-jeu").textContent=t("titre_jeu"); el("label-langue").textContent=t("langue"); el("effacer").textContent=t("effacer_progression"); el("titre-niveau").textContent=t(niveau().titre); el("consigne").textContent=t("consigne"); el("boite-titre").textContent=t("boite_titre"); el("boite-explication").textContent=t("boite_explication"); el("programme-titre").textContent=t("programme_titre"); el("executer").textContent=t("lancer"); el("recommencer").textContent=t("recommencer"); el("indice-titre").textContent=t("indice_titre"); el("indice").textContent=t(niveau().indice); el("pied").textContent=t("pied"); el("niveau-suivant").textContent=NIVEAUX.length>1?t("niveau_suivant"):t("rejouer"); el("niveau-suivant").classList.toggle("cache", false); construireLangues(); afficherCompteur(); }
+    function construireLangues() { const select=el("langues"), ancienne=select.value; select.innerHTML=""; Object.keys(TEXTES).forEach(code=>{ const option=document.createElement("option"); option.value=code; option.textContent=t(`langue_${code}`); select.append(option); }); select.value=TEXTES[langue]?langue:"fr"; if(ancienne && TEXTES[ancienne]) select.value=ancienne; }
+    function dessinerGrille() { const niveauActuel=niveau(), grille=el("grille"); grille.innerHTML=""; grille.setAttribute("aria-label",t("aria_grille")); niveauActuel.grille.forEach((ligne,li)=>[...ligne].forEach((type,co)=>{ const cellule=document.createElement("div"); cellule.className="case"; if(type==="M") { cellule.classList.add("mer"); cellule.innerHTML=svgVagues(); } else if(type==="#") { cellule.classList.add("rocher"); cellule.innerHTML=svgRocher(); } if(li===position.ligne && co===position.colonne) { cellule.insertAdjacentHTML("beforeend",svgTortue()); cellule.classList.add("tarta"); } grille.append(cellule); })); }
+    function fabriquerBloc(type, options={}) { const bloc=document.createElement("div"); bloc.className=`bloc ${type=== "boucle" ? "boucle":"direction"}`; bloc.dataset.type=type; bloc.draggable=true; bloc.setAttribute("role","button"); bloc.setAttribute("aria-label",t("aria_bloc",{nom:type==="depart"?t("quand_execute"):type==="boucle"?t("repeter"):t(type)})); if(type!=="boucle" && type!=="depart") { bloc.textContent={nord:"↑ ",sud:"↓ ",est:"→ ",ouest:"← "}[type]+t(type); } else if(type==="boucle") { const entete=document.createElement("div"); entete.className="entete-boucle"; entete.append("↻ ",t("repeter")); const repeteur=document.createElement("span"); repeteur.className="repeteur"; const moins=document.createElement("button"); moins.type="button"; moins.textContent="−"; moins.setAttribute("aria-label","−"); const valeur=document.createElement("output"); valeur.textContent=options.repetitions||1; const plus=document.createElement("button"); plus.type="button"; plus.textContent="+"; plus.setAttribute("aria-label","+"); moins.addEventListener("click",e=>{e.stopPropagation(); valeur.value=Math.max(1,Number(valeur.value)-1);}); plus.addEventListener("click",e=>{e.stopPropagation(); valeur.value=Math.min(9,Number(valeur.value)+1);}); repeteur.append(moins,valeur,plus); entete.append(repeteur); bloc.append(entete); const contenu=document.createElement("div"); contenu.className="conteneur-boucle"; bloc.append(contenu); } ajouterInteractions(bloc); return bloc; }
+    function ajouterInteractions(bloc) { bloc.addEventListener("dragstart",e=>{ bloc.dataset.drague="oui"; e.dataTransfer.setData("text/plain",bloc.dataset.type); e.dataTransfer.effectAllowed="copy"; }); bloc.addEventListener("dragend",()=>setTimeout(()=>delete bloc.dataset.drague,1000)); bloc.addEventListener("click",()=>{ if(bloc.dataset.drague) { delete bloc.dataset.drague; return; } if(!execution && !bloc.closest("#programme")) ajouterAuProgramme(bloc.dataset.type); }); }
+    function construireBibliotheque() { const b=el("bibliotheque"); b.innerHTML=""; ["nord","sud","est","ouest","boucle"].forEach(type=>b.append(fabriquerBloc(type))); }
+    function ajouterAuProgramme(type, cible=cibleActive || el("programme"), repetitions=1) { if(compterBlocs(programme)>=niveau().maxBlocs) return; const bloc=fabriquerBloc(type,{repetitions}); ajouterBoutonSuppression(bloc); cible.append(bloc); if(type==="boucle") { const contenu=bloc.querySelector(".conteneur-boucle"); installerZoneDepot(contenu); installerCibleClique(contenu); } programme=serialiserProgramme(); afficherCompteur(); }
+    function compterBlocs(noeuds=programme) { return noeuds.reduce((total,noeud)=>total+1+(noeud.type==="boucle"?compterBlocs(noeud.enfants):0),0); }
+    function serialiserProgramme(conteneur=el("programme")) { return [...conteneur.children].filter(n=>n.dataset.type && n.dataset.type!=="depart").map(n=>({type:n.dataset.type,repetitions:n.dataset.type==="boucle"?Number(n.querySelector("output").value):undefined,enfants:n.dataset.type==="boucle"?serialiserProgramme(n.querySelector(".conteneur-boucle")):[]})); }
+    function rendreProgramme() { const zone=el("programme"); zone.innerHTML=""; const depart=fabriquerBloc("depart"); depart.dataset.type="depart"; depart.draggable=false; depart.className="bloc"; depart.textContent=t("quand_execute"); zone.append(depart); programme.forEach(noeud=>zone.append(rendreNoeud(noeud))); installerZoneDepot(zone); afficherCompteur(); }
+    function ajouterBoutonSuppression(bloc) { const bouton=document.createElement("button"); bouton.type="button"; bouton.className="supprimer"; bouton.textContent="×"; bouton.setAttribute("aria-label",t("supprimer")); bouton.title=t("supprimer"); bouton.addEventListener("click",e=>{ e.stopPropagation(); if(execution) return; bloc.remove(); programme=serialiserProgramme(); afficherCompteur(); }); bloc.append(bouton); }
+    function rendreNoeud(noeud) { const bloc=fabriquerBloc(noeud.type,{repetitions:noeud.repetitions}); if(noeud.type==="boucle") { const contenu=bloc.querySelector(".conteneur-boucle"); noeud.enfants.forEach(enfant=>contenu.append(rendreNoeud(enfant))); installerZoneDepot(contenu); installerCibleClique(contenu); } ajouterBoutonSuppression(bloc); return bloc; }
+    function installerZoneDepot(zone) { if(zone.dataset.depotInstalle==="oui") return; zone.dataset.depotInstalle="oui"; zone.addEventListener("dragover",e=>{e.preventDefault(); e.stopPropagation(); if(compterBlocs(programme)<niveau().maxBlocs) zone.classList.add("drop-active");}); zone.addEventListener("dragleave",()=>zone.classList.remove("drop-active")); zone.addEventListener("drop",e=>{e.preventDefault(); e.stopPropagation(); zone.classList.remove("drop-active"); if(compterBlocs(programme)>=niveau().maxBlocs) return; const type=e.dataTransfer.getData("text/plain"); if(["nord","sud","est","ouest","boucle"].includes(type)) { ajouterAuProgramme(type,zone); } }); }
+    function installerCibleClique(zone) { if(zone.dataset.clicInstalle==="oui") return; zone.dataset.clicInstalle="oui"; zone.addEventListener("click",e=>{ e.stopPropagation(); cibleActive=zone; document.querySelectorAll(".conteneur-boucle").forEach(autre=>autre.classList.toggle("cible-active",autre===zone)); }); }
+    function afficherCompteur() { el("compteur").textContent=t("blocs_utilises",{utilises:compterBlocs(programme),max:niveau().maxBlocs}); }
+    function reinitialiser() { programme=[]; cibleActive=null; position={...niveau().depart}; execution=false; el("statut").className="statut"; el("statut").textContent=""; dessinerGrille(); rendreProgramme(); }
+    function pause(ms) { return new Promise(resolve=>setTimeout(resolve,ms)); }
+    function surligner(bloc,on) { bloc.classList.toggle("en-cours",on); }
+    async function executerNoeuds(noeuds, elements) { for(let i=0;i<noeuds.length;i++) { const noeud=noeuds[i], bloc=elements[i]; surligner(bloc,true); if(noeud.type==="boucle") { for(let tour=0;tour<noeud.repetitions;tour++) await executerNoeuds(noeud.enfants,[...bloc.querySelector(".conteneur-boucle").children]); } else await deplacer(noeud.type); surligner(bloc,false); if(!execution) return false; } return true; }
+    async function deplacer(type) { const niveauActuel=niveau(), delta=directions[type], prochaine={ligne:position.ligne+delta.ligne,colonne:position.colonne+delta.colonne}; await pause(400); if(prochaine.ligne<0||prochaine.ligne>=8||prochaine.colonne<0||prochaine.colonne>=8||niveauActuel.grille[prochaine.ligne][prochaine.colonne]==="#") { const tortue=el("grille").querySelector(".tarta"); if(tortue) { tortue.animate([{transform:"translateX(-5px)"},{transform:"translateX(5px)"},{transform:"translateX(0)"}],{duration:280}); } return; } position=prochaine; dessinerGrille(); }
+    async function lancer() { if(execution) return; execution=true; el("statut").className="statut"; el("statut").textContent=""; const noeuds=programme; const blocs=[...el("programme").children].slice(1); await executerNoeuds(noeuds,blocs); execution=false; const atteint=position.ligne===niveau().but.ligne&&position.colonne===niveau().but.colonne; if(atteint) { el("statut").className="statut succes"; el("statut").textContent=t("succes"); const tortue=el("grille").querySelector(".tarta"); if(tortue) tortue.animate([{transform:"translateY(0)"},{transform:"translateY(-8px)"},{transform:"translateY(0)"}],{duration:700,iterations:2}); sauvegarder(); } else { el("statut").className="statut echec"; el("statut").textContent=t("echec"); } }
+    function sauvegarder() { try { const donnees=JSON.parse(localStorage.getItem(stockage)||"{}"); donnees[indexNiveau]=true; localStorage.setItem(stockage,JSON.stringify(donnees)); } catch(erreur) { console.warn("Sauvegarde indisponible",erreur); } }
+    function effacerProgression() { try { localStorage.removeItem(stockage); el("statut").textContent=t("progression_effacee"); } catch(erreur) { console.warn("Effacement indisponible",erreur); } }
+    function changerLangue(code) { langue=TEXTES[code]?code:"fr"; try { localStorage.setItem("tarta-na-praia-langue",langue); } catch(erreur) { console.warn("Langue non mémorisée",erreur); } afficherTextes(); rendreProgramme(); }
+    el("executer").addEventListener("click",lancer); el("recommencer").addEventListener("click",reinitialiser); el("effacer").addEventListener("click",effacerProgression); el("langues").addEventListener("change",e=>changerLangue(e.target.value)); el("niveau-suivant").addEventListener("click",()=>{ indexNiveau=NIVEAUX.length>1?(indexNiveau+1)%NIVEAUX.length:0; afficherTextes(); reinitialiser(); });
+    try { const langueSauvee=localStorage.getItem("tarta-na-praia-langue"); if(langueSauvee && TEXTES[langueSauvee]) langue=langueSauvee; } catch(erreur) { console.warn("Lecture de langue indisponible",erreur); }
+    afficherTextes(); construireBibliotheque(); rendreProgramme(); installerZoneDepot(el("programme")); dessinerGrille();
+  </script>
+</body>
+</html>
