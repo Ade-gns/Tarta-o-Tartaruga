@@ -17,7 +17,7 @@ Pour développer, on peut aussi servir le dossier avec `python3 -m http.server`,
 
 ## Parcours de l'enfant
 
-1. **Lanceur** (`index.html`) : l'enfant choisit sa langue (FR | PT), écrit son prénom et lance une activité. Seule l'activité Tarta na Praia est disponible pour l'instant ; les quatre autres sont affichées « Bientôt ».
+1. **Lanceur** (`index.html`) : l'enfant choisit sa langue (FR | PT), écrit son prénom et lance une activité. Deux activités sont disponibles : **Tarta na Praia** et **Le labyrinthe** (voir [`labyrinthe/LISEZMOI.md`](labyrinthe/LISEZMOI.md)). Les trois autres sont affichées « Bientôt ».
 2. **Jeu** (`tarta.html`) : cinq niveaux. Quand un niveau est réussi, Tarta plonge dans la mer et le niveau suivant s'affiche tout seul.
 3. **Victoire** (`victoire.html`) : après le niveau 5. « Rejouer » relance le niveau 1, « Retour au menu » revient au lanceur, où l'activité est alors marquée « Terminé ».
 
@@ -50,6 +50,7 @@ Le nombre de blocs n'est pas limité : un enfant peut aussi réussir en posant l
 | Fichier ou dossier | Rôle |
 |---|---|
 | `index.html` | Lanceur : écran d'accueil des activités. |
+| `labyrinthe/` | Activité « Le labyrinthe » : page autonome, scripts de vérification des niveaux et des langues, et son propre `LISEZMOI.md`. |
 | `lanceur/` | Style (`lanceur.css`), textes FR/PT (`textes.js`), décor, tortue, icônes, ligne d'activité et barre du bas (`composants.js`), logique (`lanceur.js`). |
 | `tarta.html` | Le jeu, complet et autonome : HTML, CSS, JavaScript, textes FR/PT et visuels de la grille (sprites SVG intégrés). |
 | `victoire.html` | Écran de victoire. |
@@ -94,12 +95,12 @@ Dans `lanceur/textes.js`, les textes français mettent une espace insécable (é
 
 ## Brancher une nouvelle activité
 
-Les activités 2 à 5 du lanceur (labyrinthe, coquillages, pixels en binaire, formes) sont prévues mais pas encore réalisées. Quand l'une d'elles existe :
+Les activités 3 à 5 du lanceur (coquillages, pixels en binaire, formes) sont prévues mais pas encore réalisées. Quand l'une d'elles existe :
 
 1. placez sa page à la racine, par exemple `labyrinthe.html` ;
 2. dans `lanceur/lanceur.js`, indiquez son chemin dans le champ `page` de son entrée du tableau `ACTIVITES`.
 
-Le bouton devient alors actif, avec la pastille ▶ à la place de « Bientôt ». Si l'activité enregistre `serie_terminee: true` dans une clé de stockage, indiquez cette clé dans `progression` : le lanceur affichera « Terminé ».
+Le bouton devient alors actif, avec la pastille ▶ à la place de « Bientôt ». Si l'activité enregistre `serie_terminee: true` dans une clé de stockage, indiquez cette clé dans `progression` : le lanceur affichera « Terminé ». Ajoutez `langueDansUrl: true` si la page doit recevoir la langue en paramètre (`?lang=fr`), comme le labyrinthe.
 
 ## Données enregistrées
 
@@ -110,6 +111,7 @@ Tout reste dans le navigateur de l'ordinateur (`localStorage`). Rien n'est envoy
 | `tarta-na-praia-langue` | Langue choisie (`fr` ou `pt`). |
 | `tarta-na-praia-prenom` | Prénom écrit dans le lanceur. |
 | `tarta-na-praia-progression` | Niveaux réussis et `serie_terminee`. Effacée par « Rejouer » et par « Effacer la progression ». |
+| `labyrinthe_niveaux` | Niveaux du labyrinthe réussis (`reussis`) et `serie_terminee`. |
 
 Si le stockage est bloqué (navigation privée, réglages de l'école…), tout fonctionne quand même : seuls les choix ne sont pas retenus.
 

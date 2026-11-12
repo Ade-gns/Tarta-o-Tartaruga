@@ -2,9 +2,10 @@
 // Lanceur : liste des activités, langue, prénom et mise à l'échelle de la scène 1024×768.
 // Pour brancher une activité, donner à son entrée le chemin de sa page dans `page`.
 // `progression` (facultatif) : clé où l'activité enregistre `serie_terminee` ; le lanceur affiche alors « Terminé ».
+// `langueDansUrl` (facultatif) : la page reçoit la langue en paramètre (`?lang=fr`).
 const ACTIVITES = [
   { id:"tarta", page:"tarta.html", progression:"tarta-na-praia-progression" },
-  { id:"labyrinthe", page:null },
+  { id:"labyrinthe", page:"labyrinthe/index.html", progression:"labyrinthe_niveaux", langueDansUrl:true },
   { id:"coquillages", page:null },
   { id:"binaire", page:null },
   { id:"formes", page:null }
@@ -46,7 +47,7 @@ function construire() {
   el("mascotte").innerHTML = Composants.tortue();
   ACTIVITES.forEach(activite => {
     const ligne = Composants.ligneActivite(activite, serieTerminee(activite));
-    if (activite.page) ligne.querySelector("button").addEventListener("click", () => { window.location.href = activite.page; });
+    if (activite.page) ligne.querySelector("button").addEventListener("click", () => { window.location.href = activite.page + (activite.langueDansUrl ? `?lang=${langue}` : ""); });
     el("activites").append(ligne);
   });
   el("barre").innerHTML = Composants.barreBas(Object.keys(TEXTES_LANCEUR));
@@ -56,8 +57,10 @@ function construire() {
   prenom.addEventListener("input", () => ecrire(CLE_PRENOM, prenom.value.trim()));
 }
 
-const langueSauvee = lire(CLE_LANGUE);
-if (langueSauvee && TEXTES_LANCEUR[langueSauvee]) langue = langueSauvee;
+// Langue : paramètre `?lang=` (retour d'une activité), sinon celle mémorisée.
+const langueDemandee = new URLSearchParams(window.location.search).get("lang"), langueSauvee = lire(CLE_LANGUE);
+if (langueDemandee && TEXTES_LANCEUR[langueDemandee]) { langue = langueDemandee; ecrire(CLE_LANGUE, langue); }
+else if (langueSauvee && TEXTES_LANCEUR[langueSauvee]) langue = langueSauvee;
 construire();
 afficherTextes();
 ajusterEchelle();

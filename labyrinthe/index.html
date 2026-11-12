@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Le labyrinthe</title>
+  <style>
+    /* Le labyrinthe — scène 1024×768 (maquette « Labyrinthe »), mise à l'échelle par mettreAEchelle().
+       Pas de flex « gap » ni de syntaxe récente : le jeu doit tourner sur de vieux navigateurs. */
+    * { box-sizing:border-box; }
+    html, body { margin:0; height:100%; overflow:hidden; background:#15361F; }
+    body { font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif; color:#15361F; }
+    button { font-family:inherit; color:#15361F; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+    /* Focus clavier : visible partout ; les navigateurs récents le cachent après un clic souris. */
+    button:focus { outline:5px solid #0E64B0; outline-offset:3px; }
+    button:focus:not(:focus-visible) { outline:none; }
+    .cache { display:none !important; }
+    .pour-lecteur { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+    /* position:fixed : la scène non réduite ne doit pas élargir la page (sinon les navigateurs mobiles dézooment). */
+    .scene { position:fixed; left:0; top:0; width:1024px; height:768px; overflow:hidden; background:#F7CF73; -webkit-transform-origin:0 0; transform-origin:0 0; }
+    .fond { position:absolute; left:0; top:0; }
+
+    /* Bandeau */
+    .bandeau { position:absolute; left:122px; top:12px; width:780px; height:100px; display:flex; align-items:center; padding:0 28px 0 18px; background:#FFC93C; border:4px solid #15361F; border-radius:50px; box-shadow:0 6px 0 rgba(21,54,31,.28); }
+    .bandeau .tete { width:72px; height:72px; flex:none; margin-right:16px; }
+    .titre { margin:0; flex:1; font-weight:700; font-size:48px; line-height:1; white-space:nowrap; }
+    .niveau { flex:none; display:flex; flex-direction:column; align-items:flex-end; }
+    .texte-niveau { font-weight:700; font-size:28px; line-height:1; margin-bottom:4px; }
+    .etoiles svg { margin-left:4px; }
+
+    /* Plateau de jeu : 480×480 dans le cadre de sable dessiné par le fond */
+    .plateau { position:absolute; left:28px; top:162px; width:480px; height:480px; }
+    .cases { position:absolute; left:0; top:0; width:480px; height:480px; overflow:hidden; border-radius:16px; }
+    .cases svg, .traces svg, .objet { position:absolute; display:block; }
+    .cadre { position:absolute; left:0; top:0; width:480px; height:480px; border:4px solid #15361F; border-radius:16px; pointer-events:none; }
+    .crabe { position:absolute; left:0; top:0; -webkit-transition:-webkit-transform .4s ease-in-out; transition:transform .4s ease-in-out; }
+    .crabe .corps { width:100%; height:100%; -webkit-transition:-webkit-transform .3s ease-in-out; transition:transform .3s ease-in-out; }
+    .crabe .corps svg { width:100%; height:100%; display:block; overflow:visible; }
+    .crabe.choc .corps { -webkit-animation:secoue .45s ease-in-out; animation:secoue .45s ease-in-out; }
+    .crabe.content .corps { -webkit-animation:saute .6s ease-in-out 2; animation:saute .6s ease-in-out 2; }
+    @-webkit-keyframes secoue { 0%,100% { -webkit-transform:rotate(-8deg); } 20% { -webkit-transform:translateX(-7px) rotate(-8deg); } 40% { -webkit-transform:translateX(7px) rotate(-8deg); } 60% { -webkit-transform:translateX(-5px) rotate(-8deg); } 80% { -webkit-transform:translateX(5px) rotate(-8deg); } }
+    @keyframes secoue { 0%,100% { transform:rotate(-8deg); } 20% { transform:translateX(-7px) rotate(-8deg); } 40% { transform:translateX(7px) rotate(-8deg); } 60% { transform:translateX(-5px) rotate(-8deg); } 80% { transform:translateX(5px) rotate(-8deg); } }
+    @-webkit-keyframes saute { 0%,100% { -webkit-transform:translateY(0); } 50% { -webkit-transform:translateY(-12px); } }
+    @keyframes saute { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-12px); } }
+    .impact { position:absolute; width:60px; height:60px; pointer-events:none; }
+
+    /* Bulle « Oups ! » avec sa pointe */
+    .bulle { position:absolute; width:250px; min-height:90px; padding:8px 12px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:#fff; border:4px solid #15361F; border-radius:30px; z-index:3; }
+    .bulle b { font-weight:700; font-size:36px; line-height:1; }
+    .bulle span { font-weight:800; font-size:26px; line-height:1.1; margin-top:2px; }
+    .bulle .pointe { position:absolute; top:100%; margin-top:-4px; width:44px; height:34px; }
+    .bulle.dessous .pointe { top:auto; bottom:100%; margin-top:0; margin-bottom:-4px; -webkit-transform:scaleY(-1); transform:scaleY(-1); }
+
+    .confettis { position:absolute; left:0; top:0; pointer-events:none; -webkit-animation:apparait .5s ease-out; animation:apparait .5s ease-out; }
+    @-webkit-keyframes apparait { from { opacity:0; -webkit-transform:translateY(-30px); } to { opacity:1; -webkit-transform:none; } }
+    @keyframes apparait { from { opacity:0; transform:translateY(-30px); } to { opacity:1; transform:none; } }
+
+    /* Panneau de droite : consigne, programme, flèches */
+    .cote { position:absolute; left:540px; top:150px; width:468px; height:504px; padding:18px 20px; display:flex; flex-direction:column; justify-content:space-between; background:#fff; border:4px solid #15361F; border-radius:34px; box-shadow:0 8px 0 rgba(21,54,31,.28); }
+    .consigne { margin:0; font-weight:800; font-size:26px; line-height:1.2; text-align:center; }
+    .bravo { margin:0; padding:8px 0; text-align:center; background:#FFC93C; border:4px solid #15361F; border-radius:40px; font-weight:700; font-size:52px; line-height:1.1; }
+    .titre-programme { margin:0; font-weight:700; font-size:32px; line-height:1; }
+    .programme { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(4, 1fr); grid-gap:12px; }
+    .programme.serre { grid-gap:10px; }
+    .emplacement { position:relative; width:100%; height:84px; padding:0; display:flex; align-items:center; justify-content:center; background:#FFF9E6; border:3px solid #E6D49B; border-radius:22px; cursor:pointer; }
+    .programme.serre .emplacement { height:72px; }
+    .emplacement svg { width:72px; height:55px; display:block; }
+    .emplacement.vide { background:#FFFBEF; border:3px dashed #BCC6C9; cursor:default; }
+    .emplacement.fait { background:#E3F8F5; border-color:#15361F; }
+    .emplacement.actif { background:#FFC93C; border:4px solid #15361F; -webkit-transform:scale(1.07); transform:scale(1.07); box-shadow:0 4px 0 rgba(21,54,31,.28); z-index:1; }
+    .emplacement.actif:before { content:""; position:absolute; top:-17px; left:50%; margin-left:-10px; border:10px solid transparent; border-top:12px solid #15361F; border-bottom:0; }
+    .emplacement.choc { background:#FFB9A8; border:4px solid #15361F; }
+    .emplacement:disabled { cursor:default; }
+    .programme.plein { -webkit-animation:secoue-liste .4s; animation:secoue-liste .4s; }
+    @-webkit-keyframes secoue-liste { 25% { -webkit-transform:translateX(-6px); } 75% { -webkit-transform:translateX(6px); } }
+    @keyframes secoue-liste { 25% { transform:translateX(-6px); } 75% { transform:translateX(6px); } }
+    .fleches { display:flex; justify-content:space-between; }
+    .fleche { width:130px; height:104px; padding:0; border:0; background:none; cursor:pointer; -webkit-transition:-webkit-transform .12s; transition:transform .12s; }
+    .fleche svg { display:block; width:130px; height:100px; }
+    .fleche:hover { -webkit-transform:translateY(-3px); transform:translateY(-3px); }
+    .fleche:active { -webkit-transform:translateY(3px); transform:translateY(3px); }
+    .fleche:focus { border-radius:30px; }
+    .fleche:disabled { opacity:.45; cursor:default; -webkit-transform:none; transform:none; }
+
+    /* Boutons du bas */
+    .bouton { position:absolute; top:670px; height:84px; padding:0 12px; display:flex; align-items:center; justify-content:center; background:#fff; border:4px solid #15361F; border-radius:42px; font-weight:700; font-size:30px; line-height:1; cursor:pointer; box-shadow:0 5px 0 rgba(21,54,31,.28); -webkit-transition:-webkit-transform .12s; transition:transform .12s; }
+    .bouton svg { flex:none; }
+    .bouton svg + span { margin-left:12px; }
+    .bouton span + svg { margin-left:12px; }
+    .bouton.go { left:16px; width:268px; background:#74CE57; }
+    .bouton.effacer { left:300px; width:220px; }
+    .bouton.suivant { left:16px; width:504px; background:#FFC93C; }
+    .bouton.menu { left:540px; width:300px; font-size:27px; white-space:nowrap; }
+    .bouton:disabled { opacity:.45; cursor:default; box-shadow:none; }
+    .bouton:hover:not(:disabled) { -webkit-transform:translateY(-2px); transform:translateY(-2px); }
+    .bouton:active:not(:disabled) { -webkit-transform:translateY(3px); transform:translateY(3px); box-shadow:none; }
+
+    /* Choix de la langue (même pastille que le lanceur) */
+    .langues { position:absolute; left:848px; top:670px; width:160px; height:84px; padding:4px; display:flex; justify-content:space-between; background:#E4F6F3; border:4px solid #15361F; border-radius:42px; }
+    .bouton-langue { width:70px; height:70px; border:0; border-radius:35px; background:transparent; font-weight:700; font-size:26px; cursor:pointer; }
+    .bouton-langue[aria-pressed="true"] { background:#15361F; color:#fff; }
+
+    /* Écran de fin, après le dernier niveau */
+    .fin { position:absolute; left:16px; top:150px; width:992px; height:504px; display:flex; flex-direction:column; align-items:center; justify-content:space-around; padding:24px; background:#fff; border:4px solid #15361F; border-radius:40px; box-shadow:0 8px 0 rgba(21,54,31,.28); text-align:center; }
+    .fin .bravo { width:440px; }
+    .fin .crabe-fin { width:180px; height:180px; }
+    .fin .etoiles svg { margin:0 4px; }
+    .fin .bouton { position:static; width:420px; font-size:30px; }
+
+    @media (prefers-reduced-motion:reduce) {
+      .crabe, .crabe .corps, .fleche, .bouton { -webkit-transition:none; transition:none; }
+      .crabe.choc .corps, .crabe.content .corps, .confettis, .programme.plein { -webkit-animation:none; animation:none; }
+      .crabe.choc .corps { -webkit-transform:rotate(-8deg); transform:rotate(-8deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene" id="scene">
+    <!-- Décor : mer, soleil, bateau et cadre du plateau (laby-fond) -->
+    <svg class="fond" aria-hidden="true" viewBox="0 0 1024 768" width="1024" height="768">
+      <defs>
+        <linearGradient id="degrade-ciel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD8F5"/><stop offset="1" stop-color="#E8FAFF"/></linearGradient>
+        <linearGradient id="degrade-mer" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#169FC6"/><stop offset="1" stop-color="#22C7C8"/></linearGradient>
+      </defs>
+      <rect x="0" y="0" width="1024" height="70" fill="url(#degrade-ciel)"/>
+      <g transform="translate(10 -8)" fill="#fff"><circle cx="30" cy="34" r="18"/><circle cx="56" cy="24" r="24"/><circle cx="84" cy="36" r="16"/><rect x="14" y="36" width="84" height="14" rx="7"/></g>
+      <g transform="translate(950 34)">
+        <g stroke="#FFC93C" stroke-width="8" stroke-linecap="round"><path d="M0 -50 V-64"/><path d="M0 -50 V-64" transform="rotate(30)"/><path d="M0 -50 V-64" transform="rotate(60)"/><path d="M0 -50 V-64" transform="rotate(90)"/><path d="M0 -50 V-64" transform="rotate(120)"/><path d="M0 -50 V-64" transform="rotate(150)"/><path d="M0 -50 V-64" transform="rotate(180)"/><path d="M0 -50 V-64" transform="rotate(210)"/><path d="M0 -50 V-64" transform="rotate(240)"/><path d="M0 -50 V-64" transform="rotate(270)"/><path d="M0 -50 V-64" transform="rotate(300)"/><path d="M0 -50 V-64" transform="rotate(330)"/></g>
+        <circle cx="0" cy="0" r="38" fill="#FFD34D" stroke="#15361F" stroke-width="4"/>
+      </g>
+      <rect x="0" y="56" width="1024" height="102" fill="url(#degrade-mer)"/>
+      <g fill="none" stroke-linecap="round">
+        <path d="M0 82 q32 -10 64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0" stroke="#9AF2E8" stroke-width="5" opacity=".75"/>
+        <path d="M0 114 q32 -10 64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0" stroke="#FFFCF2" stroke-width="4" opacity=".45"/>
+        <path d="M0 138 q32 -10 64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0" stroke="#9AF2E8" stroke-width="5" opacity=".6"/>
+        <g stroke="#FFF6C2" stroke-width="7"><path d="M930 90 h30"/><path d="M890 118 h24"/><path d="M968 132 h20"/></g>
+      </g>
+      <g transform="translate(14 78) scale(.62)">
+        <path d="M-8 30 q14 -8 28 0 t28 0 t28 0 t28 0" fill="none" stroke="#FFFCF2" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+        <path d="M55 0 V-52" stroke="#15361F" stroke-width="5" stroke-linecap="round"/>
+        <path d="M55 -52 L82 -44 L55 -36 Z" fill="#FFC93C" stroke="#15361F" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M0 0 H110 L96 24 H14 Z" fill="#FF6A3A" stroke="#15361F" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M6 9 H104" stroke="#FFC93C" stroke-width="6"/>
+        <path d="M0 0 H110 L96 24 H14 Z" fill="none" stroke="#15361F" stroke-width="5" stroke-linejoin="round"/>
+      </g>
+      <rect x="0" y="150" width="1024" height="618" fill="#F7CF73"/>
+      <rect x="0" y="150" width="1024" height="30" fill="#E7B563"/>
+      <path d="M0 154 q32 -16 64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0 t64 0" fill="none" stroke="#FFFCF2" stroke-width="12" stroke-linecap="round"/>
+      <g fill="#E0AA45"><circle cx="530" cy="662" r="3"/><circle cx="300" cy="660" r="3"/><circle cx="1014" cy="400" r="3"/><circle cx="8" cy="500" r="3"/><circle cx="700" cy="664" r="3"/><circle cx="900" cy="662" r="3"/></g>
+      <rect x="16" y="158" width="504" height="504" rx="30" fill="#5A2D05" opacity=".28"/>
+      <rect x="16" y="150" width="504" height="504" rx="30" fill="#E7B563" stroke="#15361F" stroke-width="4"/>
+    </svg>
+
+    <!-- Planche d'éléments (repris de « Labyrinthe · Éléments seuls ») : chaque dessin est un <symbol> réutilisé avec <use> -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+      <symbol id="dessin-sable" viewBox="0 0 100 100">
+        <rect width="100" height="100" fill="#FCE3A2"/><rect x="1" y="1" width="98" height="98" fill="none" stroke="#7D460F" stroke-opacity=".22" stroke-width="2"/>
+        <g fill="#E0AA45"><circle cx="20" cy="24" r="2.6"/><circle cx="70" cy="18" r="2.6"/><circle cx="82" cy="52" r="2.6"/><circle cx="30" cy="78" r="2.6"/><circle cx="62" cy="84" r="2.6"/><circle cx="46" cy="44" r="2"/></g>
+        <path d="M14 62 q12 -8 24 0 t24 0" fill="none" stroke="#EBBA55" stroke-width="3.5" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="dessin-rocher" viewBox="0 0 100 100">
+        <rect width="100" height="100" fill="#FCE3A2"/><rect x="1" y="1" width="98" height="98" fill="none" stroke="#7D460F" stroke-opacity=".22" stroke-width="2"/>
+        <ellipse cx="50" cy="86" rx="38" ry="7" fill="#5A2D05" opacity=".25"/>
+        <path d="M14 76 C8 54 22 32 42 24 C58 14 82 26 86 48 C92 66 84 84 66 84 L28 84 C20 84 16 80 14 76 Z" fill="#3B3442" stroke="#15361F" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M42 28 C56 28 66 36 64 48 C54 44 44 46 36 52 C32 42 36 34 42 28 Z" fill="#6C6176"/>
+        <path d="M62 56 L76 62 L68 74 Z" fill="#6C6176"/>
+        <g fill="#211C27"><ellipse cx="60" cy="68" rx="5" ry="3"/><ellipse cx="32" cy="70" rx="4" ry="2.5"/><ellipse cx="74" cy="46" rx="3.5" ry="2.5"/></g>
+      </symbol>
+      <symbol id="dessin-muret" viewBox="0 0 100 100">
+        <rect width="100" height="100" fill="#FCE3A2"/><rect x="1" y="1" width="98" height="98" fill="none" stroke="#7D460F" stroke-opacity=".22" stroke-width="2"/>
+        <ellipse cx="50" cy="88" rx="42" ry="6" fill="#5A2D05" opacity=".25"/>
+        <rect x="6" y="34" width="88" height="50" rx="10" fill="#E0AA45" stroke="#15361F" stroke-width="5"/>
+        <rect x="6" y="14" width="88" height="40" rx="12" fill="#F7CF73" stroke="#15361F" stroke-width="5"/>
+        <path d="M12 68 H88 M40 56 V68 M26 68 V80 M62 68 V80" fill="none" stroke="#15361F" stroke-opacity=".45" stroke-width="3" stroke-linecap="round"/>
+        <path d="M18 32 q10 -6 20 0 t20 0 t20 0" fill="none" stroke="#E0AA45" stroke-width="4" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="dessin-coquillage" viewBox="0 0 100 100">
+        <circle cx="50" cy="52" r="46" fill="#FFF6B8" opacity=".55"/>
+        <ellipse cx="50" cy="88" rx="30" ry="6" fill="#5A2D05" opacity=".22"/>
+        <g transform="translate(50 56) scale(1.7)">
+          <path d="M-14 10 C-24 -2 -17 -17 0 -19 C17 -17 24 -2 14 10 Q0 16 -14 10 Z" fill="#FFE2BF" stroke="#15361F" stroke-width="2.8" stroke-linejoin="round"/>
+          <path d="M0 10 L-11 -13 M0 10 L0 -17 M0 10 L11 -13 M0 10 L-17 -2 M0 10 L17 -2" fill="none" stroke="#FF8C78" stroke-width="2.4" stroke-linecap="round"/>
+          <rect x="-7" y="11" width="14" height="7" rx="2.5" fill="#FF8C78" stroke="#15361F" stroke-width="2.6"/>
+        </g>
+        <polygon transform="translate(85 18) scale(.5)" points="0,-24 6.3,-8.7 22.8,-7.4 10.3,3.3 14.1,19.4 0,10.8 -14.1,19.4 -10.3,3.3 -22.8,-7.4 -6.3,-8.7" fill="#FFC93C" stroke="#15361F" stroke-width="5" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="dessin-pas" viewBox="0 0 100 100">
+        <g fill="#A56423" fill-opacity=".6" stroke="#A56423" stroke-opacity=".6" stroke-width="3" stroke-linecap="round">
+          <circle cx="34" cy="28" r="4.5"/><circle cx="66" cy="28" r="4.5"/><circle cx="34" cy="50" r="4.5"/><circle cx="66" cy="50" r="4.5"/><circle cx="34" cy="72" r="4.5"/><circle cx="66" cy="72" r="4.5"/>
+          <path d="M28 22 L24 18 M40 22 L44 18 M60 22 L56 18 M72 22 L76 18" fill="none"/>
+          <path d="M28 44 L24 40 M40 44 L44 40 M60 44 L56 40 M72 44 L76 40" fill="none"/>
+          <path d="M28 66 L24 62 M40 66 L44 62 M60 66 L56 62 M72 66 L76 62" fill="none"/>
+        </g>
+      </symbol>
+      <symbol id="dessin-crabe-dos" viewBox="0 0 100 100">
+        <ellipse cx="50" cy="86" rx="32" ry="7" fill="#5A2D05" opacity=".22"/>
+        <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M26 58 L8 62 M25 66 L9 76 M29 73 L17 87 M74 58 L92 62 M75 66 L91 76 M71 73 L83 87" stroke="#15361F" stroke-width="10"/>
+          <path d="M26 58 L8 62 M25 66 L9 76 M29 73 L17 87 M74 58 L92 62 M75 66 L91 76 M71 73 L83 87" stroke="#FF6A3A" stroke-width="5"/>
+          <path d="M36 46 L26 34 M64 46 L74 34" stroke="#15361F" stroke-width="10"/>
+          <path d="M36 46 L26 34 M64 46 L74 34" stroke="#FF6A3A" stroke-width="5"/>
+        </g>
+        <ellipse cx="22" cy="24" rx="12" ry="14" fill="#FF6A3A" stroke="#15361F" stroke-width="4.5"/>
+        <ellipse cx="78" cy="24" rx="12" ry="14" fill="#FF6A3A" stroke="#15361F" stroke-width="4.5"/>
+        <path d="M25 11 L22 24 M75 11 L78 24" fill="none" stroke="#15361F" stroke-width="3.5" stroke-linecap="round"/>
+        <ellipse cx="50" cy="60" rx="30" ry="24" fill="#FF6A3A" stroke="#15361F" stroke-width="5"/>
+        <ellipse cx="50" cy="56" rx="19" ry="14" fill="#FF8C78"/>
+        <circle cx="42" cy="54" r="3" fill="#C9533F"/><circle cx="58" cy="54" r="3" fill="#C9533F"/><circle cx="50" cy="63" r="3" fill="#C9533F"/>
+        <path d="M41 44 V36 M59 44 V36" stroke="#15361F" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="41" cy="33" r="6.5" fill="#fff" stroke="#15361F" stroke-width="3.5"/><circle cx="59" cy="33" r="6.5" fill="#fff" stroke="#15361F" stroke-width="3.5"/>
+        <circle cx="41" cy="31.5" r="2.6" fill="#15361F"/><circle cx="59" cy="31.5" r="2.6" fill="#15361F"/>
+      </symbol>
+      <symbol id="dessin-crabe-cote" viewBox="0 0 100 100">
+        <ellipse cx="46" cy="88" rx="34" ry="7" fill="#5A2D05" opacity=".22"/>
+        <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M24 70 L14 86 M34 76 L28 92 M50 78 L52 92 M60 74 L68 90 M70 58 L82 52" stroke="#15361F" stroke-width="10"/>
+          <path d="M24 70 L14 86 M34 76 L28 92 M50 78 L52 92 M60 74 L68 90 M70 58 L82 52" stroke="#FF6A3A" stroke-width="5"/>
+        </g>
+        <ellipse cx="88" cy="46" rx="10" ry="12" fill="#FF6A3A" stroke="#15361F" stroke-width="4.5"/>
+        <path d="M91 35 L88 46" fill="none" stroke="#15361F" stroke-width="3.5" stroke-linecap="round"/>
+        <ellipse cx="44" cy="60" rx="32" ry="23" fill="#FF6A3A" stroke="#15361F" stroke-width="5"/>
+        <ellipse cx="40" cy="54" rx="20" ry="13" fill="#FF8C78"/>
+        <circle cx="32" cy="52" r="3" fill="#C9533F"/><circle cx="46" cy="50" r="3" fill="#C9533F"/><circle cx="40" cy="62" r="3" fill="#C9533F"/>
+        <path d="M60 42 L62 34 M70 44 L74 36" stroke="#15361F" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="62" cy="28" r="7" fill="#fff" stroke="#15361F" stroke-width="3.5"/><circle cx="75" cy="31" r="7" fill="#fff" stroke="#15361F" stroke-width="3.5"/>
+        <circle cx="64" cy="28" r="3" fill="#15361F"/><circle cx="77" cy="31" r="3" fill="#15361F"/>
+        <path d="M62 57 Q69 65 77 57" fill="none" stroke="#15361F" stroke-width="4" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="dessin-crabe-face" viewBox="0 0 100 100">
+        <ellipse cx="50" cy="88" rx="32" ry="7" fill="#5A2D05" opacity=".22"/>
+        <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M26 68 L10 76 M29 76 L15 90 M74 68 L90 76 M71 76 L85 90 M32 54 L18 44 M68 54 L82 44" stroke="#15361F" stroke-width="10"/>
+          <path d="M26 68 L10 76 M29 76 L15 90 M74 68 L90 76 M71 76 L85 90 M32 54 L18 44 M68 54 L82 44" stroke="#FF6A3A" stroke-width="5"/>
+        </g>
+        <ellipse cx="14" cy="34" rx="11" ry="13" fill="#FF6A3A" stroke="#15361F" stroke-width="4.5"/>
+        <ellipse cx="86" cy="34" rx="11" ry="13" fill="#FF6A3A" stroke="#15361F" stroke-width="4.5"/>
+        <path d="M11 21 L14 34 M89 21 L86 34" fill="none" stroke="#15361F" stroke-width="3.5" stroke-linecap="round"/>
+        <ellipse cx="50" cy="62" rx="30" ry="23" fill="#FF6A3A" stroke="#15361F" stroke-width="5"/>
+        <path d="M41 44 V38 M59 44 V38" stroke="#15361F" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="41" cy="31" r="8" fill="#fff" stroke="#15361F" stroke-width="3.5"/><circle cx="59" cy="31" r="8" fill="#fff" stroke="#15361F" stroke-width="3.5"/>
+        <circle cx="41" cy="33" r="3.6" fill="#15361F"/><circle cx="59" cy="33" r="3.6" fill="#15361F"/>
+        <circle cx="42.2" cy="31.6" r="1.2" fill="#fff"/><circle cx="60.2" cy="31.6" r="1.2" fill="#fff"/>
+        <circle cx="34" cy="64" r="4.5" fill="#FFB9A8"/><circle cx="66" cy="64" r="4.5" fill="#FFB9A8"/>
+        <path d="M39 63 Q50 76 61 63" fill="none" stroke="#15361F" stroke-width="4.5" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="dessin-crabe-tete" viewBox="0 0 100 100">
+        <ellipse cx="10" cy="58" rx="9" ry="10" fill="#FF6A3A" stroke="#15361F" stroke-width="4"/>
+        <ellipse cx="90" cy="58" rx="9" ry="10" fill="#FF6A3A" stroke="#15361F" stroke-width="4"/>
+        <ellipse cx="50" cy="62" rx="36" ry="28" fill="#FF6A3A" stroke="#15361F" stroke-width="5"/>
+        <path d="M38 46 V32 M62 46 V32" stroke="#15361F" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="38" cy="26" r="11" fill="#fff" stroke="#15361F" stroke-width="4"/><circle cx="62" cy="26" r="11" fill="#fff" stroke="#15361F" stroke-width="4"/>
+        <circle cx="38" cy="28" r="5" fill="#15361F"/><circle cx="62" cy="28" r="5" fill="#15361F"/>
+        <circle cx="40" cy="26" r="1.8" fill="#fff"/><circle cx="64" cy="26" r="1.8" fill="#fff"/>
+        <circle cx="27" cy="66" r="6" fill="#FFB9A8"/><circle cx="73" cy="66" r="6" fill="#FFB9A8"/>
+        <path d="M36 64 Q50 88 64 64 Q50 70 36 64 Z" fill="#B83A18" stroke="#15361F" stroke-width="4" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="dessin-fleche-A" viewBox="0 0 130 100">
+        <rect x="4" y="4" width="122" height="92" rx="26" fill="#74CE57" stroke="#15361F" stroke-width="6"/>
+        <path d="M65 16 L93 47 H77 V82 H53 V47 H37 Z" fill="#fff" stroke="#15361F" stroke-width="6" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="dessin-fleche-G" viewBox="0 0 130 100">
+        <rect x="4" y="4" width="122" height="92" rx="26" fill="#8EE6DD" stroke="#15361F" stroke-width="6"/>
+        <path d="M88 76 V58 Q88 38 68 38 H54" fill="none" stroke="#15361F" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M88 76 V58 Q88 38 68 38 H54" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+        <polygon points="56,18 28,38 56,58" fill="#fff" stroke="#15361F" stroke-width="6" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="dessin-fleche-D" viewBox="0 0 130 100">
+        <rect x="4" y="4" width="122" height="92" rx="26" fill="#FFD35C" stroke="#15361F" stroke-width="6"/>
+        <g transform="translate(130 0) scale(-1 1)">
+          <path d="M88 76 V58 Q88 38 68 38 H54" fill="none" stroke="#15361F" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M88 76 V58 Q88 38 68 38 H54" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+          <polygon points="56,18 28,38 56,58" fill="#fff" stroke="#15361F" stroke-width="6" stroke-linejoin="round"/>
+        </g>
+      </symbol>
+      <symbol id="dessin-etoile" viewBox="-28 -28 56 56">
+        <polygon points="0,-24 6.3,-8.7 22.8,-7.4 10.3,3.3 14.1,19.4 0,10.8 -14.1,19.4 -10.3,3.3 -22.8,-7.4 -6.3,-8.7" stroke="#15361F" stroke-width="3.5" stroke-linejoin="round"/>
+      </symbol>
+    </svg>
+
+    <header class="bandeau">
+      <svg class="tete" viewBox="0 0 100 100" aria-hidden="true"><use xlink:href="#dessin-crabe-tete" href="#dessin-crabe-tete"/></svg>
+      <h1 class="titre" id="titre"></h1>
+      <div class="niveau">
+        <span class="texte-niveau" id="texte-niveau"></span>
+        <div class="etoiles" id="etoiles" role="img"></div>
+      </div>
+    </header>
+
+    <div class="plateau" id="plateau" role="group">
+      <div class="cases" id="cases" role="img"></div>
+      <div class="traces" id="traces" aria-hidden="true"></div>
+      <svg class="objet" id="coquillage" viewBox="0 0 100 100" role="img"><use xlink:href="#dessin-coquillage" href="#dessin-coquillage"/></svg>
+      <div class="crabe" id="crabe" role="img"><div class="corps" id="corps-crabe"></div></div>
+      <svg class="impact cache" id="impact" viewBox="0 0 56 56" aria-hidden="true"><use xlink:href="#dessin-etoile" href="#dessin-etoile" fill="#FFC93C"/></svg>
+      <div class="cadre"></div>
+      <div class="bulle cache" id="bulle" aria-hidden="true">
+        <b id="bulle-titre"></b><span id="bulle-texte"></span>
+        <svg class="pointe" id="bulle-pointe" viewBox="0 0 44 34" aria-hidden="true"><path d="M2 0 L22 30 L42 0" fill="#fff"/><path d="M2 0 L22 30 L42 0" fill="none" stroke="#15361F" stroke-width="4" stroke-linejoin="round"/><rect x="0" y="-3" width="44" height="5" fill="#fff"/></svg>
+      </div>
+    </div>
+
+    <svg class="confettis cache" id="confettis" aria-hidden="true" viewBox="0 0 1024 768" width="1024" height="768">
+      <g fill="#FFC93C">
+        <use xlink:href="#dessin-etoile" href="#dessin-etoile" transform="translate(110 220) rotate(-12) scale(.9)" x="-28" y="-28" width="56" height="56"/>
+        <use xlink:href="#dessin-etoile" href="#dessin-etoile" transform="translate(430 200) rotate(10) scale(1.1)" x="-28" y="-28" width="56" height="56"/>
+        <use xlink:href="#dessin-etoile" href="#dessin-etoile" transform="translate(490 430) rotate(14) scale(.8)" x="-28" y="-28" width="56" height="56"/>
+        <use xlink:href="#dessin-etoile" href="#dessin-etoile" transform="translate(70 560) rotate(-10) scale(.8)" x="-28" y="-28" width="56" height="56"/>
+        <use xlink:href="#dessin-etoile" href="#dessin-etoile" transform="translate(250 260) rotate(8) scale(.7)" x="-28" y="-28" width="56" height="56"/>
+        <use xlink:href="#dessin-etoile" href="#dessin-etoile" transform="translate(390 340) rotate(-6) scale(1.2)" x="-28" y="-28" width="56" height="56"/>
+      </g>
+      <g>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(60 190) rotate(30)" fill="#FFC93C"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(180 210) rotate(-20)" fill="#FF8C78"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(300 190) rotate(50)" fill="#FFFCF2"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(500 250) rotate(-35)" fill="#8EE6DD"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(360 280) rotate(20)" fill="#FFC93C"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(450 300) rotate(-50)" fill="#FF8C78"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(320 400) rotate(35)" fill="#CDEB8B"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(480 360) rotate(-25)" fill="#FFFCF2"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(240 350) rotate(60)" fill="#FFC93C"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(120 430) rotate(-40)" fill="#8EE6DD"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(60 330) rotate(15)" fill="#FF8C78"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(200 480) rotate(40)" fill="#FFFCF2"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(420 500) rotate(-15)" fill="#FFC93C"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(330 560) rotate(25)" fill="#CDEB8B"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(150 620) rotate(-45)" fill="#FF8C78"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(470 590) rotate(55)" fill="#8EE6DD"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(280 160) rotate(-30)" fill="#FFFCF2"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(400 170) rotate(45)" fill="#8EE6DD"/>
+        <rect x="-8" y="-4.5" width="16" height="9" rx="2.5" transform="translate(40 450) rotate(-60)" fill="#FFC93C"/>
+      </g>
+    </svg>
+
+    <section class="cote" id="cote">
+      <p class="consigne" id="consigne"></p>
+      <p class="bravo cache" id="bravo"></p>
+      <h2 class="titre-programme" id="titre-programme"></h2>
+      <ol class="programme" id="programme"></ol>
+      <div class="fleches">
+        <button type="button" class="fleche" id="fleche-A" data-ordre="A"><svg viewBox="0 0 130 100" aria-hidden="true"><use xlink:href="#dessin-fleche-A" href="#dessin-fleche-A"/></svg></button>
+        <button type="button" class="fleche" id="fleche-G" data-ordre="G"><svg viewBox="0 0 130 100" aria-hidden="true"><use xlink:href="#dessin-fleche-G" href="#dessin-fleche-G"/></svg></button>
+        <button type="button" class="fleche" id="fleche-D" data-ordre="D"><svg viewBox="0 0 130 100" aria-hidden="true"><use xlink:href="#dessin-fleche-D" href="#dessin-fleche-D"/></svg></button>
+      </div>
+    </section>
+
+    <button type="button" class="bouton go" id="go"><svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><path d="M10 6 L34 20 L10 34 Z" fill="#15361F" stroke="#15361F" stroke-width="4" stroke-linejoin="round"/></svg><span id="go-texte"></span></button>
+    <button type="button" class="bouton effacer" id="effacer"><svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><g transform="rotate(-35 20 20)"><rect x="6" y="12" width="28" height="16" rx="4" fill="#FF8C78" stroke="#15361F" stroke-width="3.5"/><rect x="18" y="12" width="16" height="16" rx="4" fill="#fff" stroke="#15361F" stroke-width="3.5"/></g></svg><span id="effacer-texte"></span></button>
+    <button type="button" class="bouton suivant cache" id="suivant"><span id="suivant-texte"></span><svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 20 H30 M20 8 L32 20 L20 32" fill="none" stroke="#15361F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" class="bouton menu" id="menu"><svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true"><path d="M9 18 V32 H29 V18" fill="#FFF9E6" stroke="#15361F" stroke-width="4.5" stroke-linejoin="round"/><path d="M5 19 L19 6 L33 19" fill="none" stroke="#15361F" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="16" y="23" width="6" height="9" fill="#15361F"/></svg><span id="menu-texte"></span></button>
+    <div class="langues" id="langues" role="group"></div>
+
+    <!-- Écran de fin (après le dernier niveau) : volontairement simple -->
+    <section class="fin cache" id="fin">
+      <p class="bravo" id="fin-bravo"></p>
+      <svg class="crabe-fin" viewBox="0 0 100 100" aria-hidden="true"><use xlink:href="#dessin-crabe-face" href="#dessin-crabe-face"/></svg>
+      <div class="etoiles" id="fin-etoiles" role="img"></div>
+      <button type="button" class="bouton menu" id="fin-menu"><svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true"><path d="M9 18 V32 H29 V18" fill="#FFF9E6" stroke="#15361F" stroke-width="4.5" stroke-linejoin="round"/><path d="M5 19 L19 6 L33 19" fill="none" stroke="#15361F" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="16" y="23" width="6" height="9" fill="#15361F"/></svg><span id="fin-menu-texte"></span></button>
+    </section>
+
+    <!-- Annonces pour les lecteurs d'écran (« Oups ! », « Bravo ! ») -->
+    <p class="pour-lecteur" id="annonce" aria-live="assertive" role="status"></p>
+  </div>
+
+  <!-- ===== Données des niveaux =====
+       Une entrée par niveau. grille : « # » rocher, « = » muret (les deux sont des murs), « . » sable,
+       « S » départ, « E » arrivée (coquillage). orientation : haut, droite, bas ou gauche.
+       emplacements : nombre de cases du programme. Vérifier avec : node verifier_niveaux.js -->
+  <script id="donnees-niveaux">
+var NIVEAUX = [
+  { id: "niveau-1", taille: 6, orientation: "haut", emplacements: 8, grille: [
+    "##=###",
+    "#..=.#",
+    "..E..#",
+    ".#=#.#",
+    ".#...=",
+    "S=#.=#"] },
+  { id: "niveau-2", taille: 6, orientation: "droite", emplacements: 10, grille: [
+    "#=##=#",
+    "#..#.#",
+    "#=.E.=",
+    "##.#.#",
+    "#=.=.#",
+    "S..#.#"] },
+  { id: "niveau-3", taille: 6, orientation: "haut", emplacements: 11, grille: [
+    "#=##=#",
+    "#E.=.#",
+    "#..#.#",
+    "#=.=.#",
+    "#..#.=",
+    "#S.=.#"] },
+  { id: "niveau-4", taille: 8, orientation: "haut", emplacements: 12, grille: [
+    "#=##=###",
+    "#...#..#",
+    "#.#=#.=#",
+    "#.#.E..#",
+    "#=#.##.#",
+    "#...#..=",
+    "#..#=..#",
+    "#S#..=.#"] },
+  { id: "niveau-5", taille: 8, orientation: "haut", emplacements: 12, grille: [
+    "#=##=#=#",
+    "#......#",
+    "#.#=#.=#",
+    "#.#=.#.#",
+    "#=.E#..#",
+    "=..=#.=#",
+    "..#..#.#",
+    "S#.=..##"] }
+];
+  </script>
+
+  <!-- ===== Textes =====
+       Pour ajouter une langue : copier le bloc fr, le renommer, traduire les valeurs sans changer les clés,
+       puis lancer : node verifier_langues.js. «   » = espace insécable avant « ! » en français. -->
+  <script id="donnees-textes">
+var TEXTES = {
+  fr: {
+    code_html: "fr", nom_langue: "FR",
+    titre: "Le labyrinthe", consigne: "Aide le crabe à trouver le coquillage !", mon_programme: "Mon programme",
+    go: "Go", effacer: "Effacer", oups: "Oups !", essaie_encore: "Essaie encore", bravo: "Bravo !",
+    niveau_suivant: "Niveau suivant", continuer: "Continuer", retour_menu: "Retour au menu", niveau_x: "Niveau {n} / {total}",
+    etoiles: "{reussis} niveaux réussis sur {total}", langue: "Langue",
+    avancer: "Avancer", tourner_gauche: "Tourner à gauche", tourner_droite: "Tourner à droite",
+    retirer: "Retirer : {ordre}", emplacement_vide: "Emplacement vide",
+    plateau: "Labyrinthe de {taille} cases sur {taille}", crabe: "Le crabe, tourné vers {direction}", coquillage: "Le coquillage",
+    haut: "le haut", droite: "la droite", bas: "le bas", gauche: "la gauche",
+    programme_vide: "Ajoute des flèches", programme_plein: "Le programme est plein",
+    fin: "Tu as trouvé tous les coquillages !"
+  },
+  pt: {
+    code_html: "pt-PT", nom_langue: "PT",
+    titre: "O labirinto", consigne: "Ajuda o caranguejo a encontrar a concha!", mon_programme: "O meu programa",
+    go: "Vai", effacer: "Apagar", oups: "Ups!", essaie_encore: "Tenta outra vez", bravo: "Parabéns!",
+    niveau_suivant: "Nível seguinte", continuer: "Continuar", retour_menu: "Voltar ao menu", niveau_x: "Nível {n} / {total}",
+    etoiles: "{reussis} níveis concluídos de {total}", langue: "Língua",
+    avancer: "Avançar", tourner_gauche: "Virar à esquerda", tourner_droite: "Virar à direita",
+    retirer: "Tirar: {ordre}", emplacement_vide: "Espaço vazio",
+    plateau: "Labirinto de {taille} por {taille} casas", crabe: "O caranguejo, virado para {direction}", coquillage: "A concha",
+    haut: "cima", droite: "a direita", bas: "baixo", gauche: "a esquerda",
+    programme_vide: "Junta algumas setas", programme_plein: "O programa está cheio",
+    fin: "Encontraste todas as conchas!"
+  }
+};
+  </script>
+
+  <!-- ===== Logique et affichage ===== -->
+  <script>
+(function () {
+  "use strict";
+
+  // ---------- Réglages ----------
+  var CLE_LANGUE = "tarta-na-praia-langue";      // partagée avec le lanceur
+  var CLE_PROGRESSION = "labyrinthe_niveaux";    // { reussis: [ids], serie_terminee: bool }
+  var DELAI_ORDRE = 500;                         // durée d'un ordre pendant l'exécution (ms)
+  var DUREE_OUPS = 800;                          // durée de la bulle « Oups ! » sur un mur (ms)
+  var TAILLE_PLATEAU = 480;
+  var DIRECTIONS = ["haut", "droite", "bas", "gauche"];
+  var DEPLACEMENTS = { haut: [-1, 0], droite: [0, 1], bas: [1, 0], gauche: [0, -1] };
+  var CLES_ORDRES = { A: "avancer", G: "tourner_gauche", D: "tourner_droite" };
+  var MURS = "#=";
+
+  function el(id) { return document.getElementById(id); }
+  function lire(cle) { try { return window.localStorage.getItem(cle); } catch (erreur) { return null; } }
+  function ecrire(cle, valeur) { try { window.localStorage.setItem(cle, valeur); } catch (erreur) { /* stockage indisponible : on continue sans */ } }
+
+  // ---------- Langue ----------
+  function langueInitiale() {
+    var demande = (/[?&]lang=([a-z]+)/.exec(window.location.search) || [])[1];
+    if (demande && TEXTES[demande]) return demande;
+    var sauvee = lire(CLE_LANGUE);
+    return sauvee && TEXTES[sauvee] ? sauvee : "fr";
+  }
+  var langue = langueInitiale();
+
+  function t(cle, valeurs) {
+    var texte = (TEXTES[langue] || {})[cle];
+    if (texte === undefined) {
+      if (window.console) console.warn("Clé de texte manquante en « " + langue + " » : " + cle);
+      texte = TEXTES.fr[cle] !== undefined ? TEXTES.fr[cle] : cle;
+    }
+    return texte.replace(/\{(\w+)\}/g, function (tout, nom) { return valeurs && valeurs[nom] !== undefined ? valeurs[nom] : tout; });
+  }
+
+  // ---------- Progression ----------
+  function lireProgression() {
+    try { var p = JSON.parse(lire(CLE_PROGRESSION) || "{}"); return { reussis: p.reussis || [], serie_terminee: !!p.serie_terminee }; }
+    catch (erreur) { return { reussis: [], serie_terminee: false }; }
+  }
+  var progression = lireProgression();
+  function niveauReussi(id) { return progression.reussis.indexOf(id) >= 0; }
+  function memoriserReussite(id) {
+    if (!niveauReussi(id)) progression.reussis.push(id);
+    var tous = true;
+    for (var i = 0; i < NIVEAUX.length; i++) if (!niveauReussi(NIVEAUX[i].id)) tous = false;
+    progression.serie_terminee = tous;
+    ecrire(CLE_PROGRESSION, JSON.stringify(progression));
+  }
+
+  // ---------- État du jeu ----------
+  var etat = {
+    index: 0,             // niveau en cours
+    niveau: null,
+    depart: null, arrivee: null,
+    position: null,       // { l, c }
+    orientation: "haut",
+    programme: [],        // ordres « A », « G », « D »
+    statuts: [],          // état visuel de chaque emplacement : "", "actif", "fait", "choc"
+    traces: [],           // { l, c, direction }
+    phase: "edition",     // edition | execution | reussi | fin
+    minuteries: []
+  };
+
+  function trouver(grille, lettre) {
+    for (var l = 0; l < grille.length; l++) { var c = grille[l].indexOf(lettre); if (c >= 0) return { l: l, c: c }; }
+    return null;
+  }
+  function estMur(l, c) {
+    var g = etat.niveau.grille;
+    return l < 0 || c < 0 || l >= g.length || c >= g[l].length || MURS.indexOf(g[l].charAt(c)) >= 0;
+  }
+  function tourner(direction, pas) { return DIRECTIONS[(DIRECTIONS.indexOf(direction) + pas + 4) % 4]; }
+  function plus(fonction, delai) { etat.minuteries.push(window.setTimeout(fonction, delai)); }
+  function arreterMinuteries() { for (var i = 0; i < etat.minuteries.length; i++) window.clearTimeout(etat.minuteries[i]); etat.minuteries = []; }
+
+  // ---------- Affichage : plateau ----------
+  function taillCase() { return TAILLE_PLATEAU / etat.niveau.taille; }
+  function svgUse(id, x, y, taille, extra) {
+    return '<svg viewBox="0 0 100 100" width="' + taille + '" height="' + taille + '" style="left:' + x + 'px;top:' + y + 'px' + (extra || "") + '"><use xlink:href="#dessin-' + id + '" href="#dessin-' + id + '"/></svg>';
+  }
+
+  function dessinerCases() {
+    var g = etat.niveau.grille, taille = taillCase(), html = "";
+    for (var l = 0; l < g.length; l++) for (var c = 0; c < g[l].length; c++) {
+      var lettre = g[l].charAt(c);
+      html += svgUse(lettre === "#" ? "rocher" : lettre === "=" ? "muret" : "sable", c * taille, l * taille, taille);
+    }
+    el("cases").innerHTML = html;
+    var coquillage = el("coquillage");
+    coquillage.setAttribute("width", taille); coquillage.setAttribute("height", taille);
+    coquillage.style.left = etat.arrivee.c * taille + "px"; coquillage.style.top = etat.arrivee.l * taille + "px";
+  }
+
+  function dessinerTraces() {
+    var taille = taillCase(), html = "";
+    for (var i = 0; i < etat.traces.length; i++) {
+      var trace = etat.traces[i], angle = DIRECTIONS.indexOf(trace.direction) * 90;
+      html += svgUse("pas", trace.c * taille, trace.l * taille, taille, ";-webkit-transform:rotate(" + angle + "deg);transform:rotate(" + angle + "deg)");
+    }
+    el("traces").innerHTML = html;
+  }
+
+  // Le crabe a trois dessins (dos, côté, face) : la gauche est le dessin de côté retourné.
+  var DESSINS_CRABE = { haut: "crabe-dos", droite: "crabe-cote", gauche: "crabe-cote", bas: "crabe-face" };
+  function dessinerCrabe(content) {
+    var taille = taillCase(), crabe = el("crabe"), corps = el("corps-crabe");
+    crabe.style.width = taille + "px"; crabe.style.height = taille + "px";
+    var deplacement = "translate(" + etat.position.c * taille + "px," + etat.position.l * taille + "px)";
+    crabe.style.webkitTransform = deplacement; crabe.style.transform = deplacement;
+    var dessin = content ? "crabe-face" : DESSINS_CRABE[etat.orientation];
+    var miroir = !content && etat.orientation === "gauche" ? ' transform="translate(100 0) scale(-1 1)"' : "";
+    corps.innerHTML = '<svg viewBox="0 0 100 100"><g' + miroir + '><use xlink:href="#dessin-' + dessin + '" href="#dessin-' + dessin + '"/></g></svg>';
+    crabe.setAttribute("aria-label", t("crabe", { direction: t(etat.orientation) }));
+  }
+
+  // Bulle au-dessus du crabe (ou en dessous s'il est sur la première ligne), gardée dans le plateau.
+  var bulleCourante = null;   // { titre: cle, texte: cle|null }
+  function montrerBulle(cleTitre, cleTexte) {
+    bulleCourante = { titre: cleTitre, texte: cleTexte };
+    var bulle = el("bulle"), taille = taillCase();
+    el("bulle-titre").textContent = t(cleTitre);
+    el("bulle-texte").textContent = cleTexte ? t(cleTexte) : "";
+    el("bulle-texte").className = cleTexte ? "" : "cache";
+    bulle.className = "bulle";
+    var centre = etat.position.c * taille + taille / 2;
+    var gauche = Math.max(0, Math.min(TAILLE_PLATEAU - 250, centre - 125));
+    var dessous = etat.position.l === 0;
+    var hauteur = bulle.offsetHeight;
+    bulle.style.left = gauche + "px";
+    bulle.style.top = (dessous ? (etat.position.l + 1) * taille + 30 : etat.position.l * taille - hauteur - 26) + "px";
+    if (dessous) bulle.className = "bulle dessous";
+    el("bulle-pointe").style.left = (centre - gauche - 22 - 4) + "px";
+  }
+  function cacherBulle() { bulleCourante = null; el("bulle").className = "bulle cache"; }
+
+  function montrerImpact(direction) {
+    var taille = taillCase(), pas = DEPLACEMENTS[direction], impact = el("impact");
+    impact.setAttribute("class", "impact");
+    impact.style.left = (etat.position.c + 0.5 + pas[1] * 0.5) * taille - 30 + "px";
+    impact.style.top = (etat.position.l + 0.5 + pas[0] * 0.5) * taille - 30 + "px";
+  }
+  function cacherImpact() { el("impact").setAttribute("class", "impact cache"); }
+
+  function annoncer(texte) {
+    var annonce = el("annonce");
+    annonce.textContent = "";
+    window.setTimeout(function () { annonce.textContent = texte; }, 50);   // vider puis remplir : force la relecture
+  }
+
+  // ---------- Affichage : panneau, bandeau, boutons ----------
+  function dessinerEtoiles(conteneur, taille) {
+    var html = "", reussis = 0;
+    for (var i = 0; i < NIVEAUX.length; i++) {
+      var allumee = niveauReussi(NIVEAUX[i].id);
+      if (allumee) reussis++;
+      html += '<svg width="' + taille + '" height="' + taille + '" viewBox="0 0 56 56" aria-hidden="true"><use xlink:href="#dessin-etoile" href="#dessin-etoile" fill="' + (allumee ? "#FFC93C" : "#FFF9E6") + '"/></svg>';
+    }
+    conteneur.innerHTML = html;
+    conteneur.setAttribute("aria-label", t("etoiles", { reussis: reussis, total: NIVEAUX.length }));
+  }
+
+  function dessinerProgramme() {
+    var liste = el("programme"), html = "", bloque = etat.phase !== "edition";
+    liste.className = "programme" + (etat.niveau.emplacements > 8 ? " serre" : "");
+    for (var i = 0; i < etat.niveau.emplacements; i++) {
+      var ordre = etat.programme[i];
+      if (!ordre) { html += '<li class="emplacement vide" aria-label="' + t("emplacement_vide") + '"></li>'; continue; }
+      html += '<li><button type="button" class="emplacement ' + (etat.statuts[i] || "") + '" data-index="' + i + '"' + (bloque ? " disabled" : "") +
+        ' aria-label="' + t("retirer", { ordre: t(CLES_ORDRES[ordre]) }) + '"><svg viewBox="0 0 130 100" aria-hidden="true"><use xlink:href="#dessin-fleche-' + ordre + '" href="#dessin-fleche-' + ordre + '"/></svg></button></li>';
+    }
+    liste.innerHTML = html;
+  }
+
+  function majBoutons() {
+    var edition = etat.phase === "edition", reussi = etat.phase === "reussi", fin = etat.phase === "fin";
+    el("go").disabled = !edition; el("effacer").disabled = !edition;
+    var fleches = ["A", "G", "D"];
+    for (var i = 0; i < fleches.length; i++) el("fleche-" + fleches[i]).disabled = !edition;
+    el("go").className = "bouton go" + (reussi || fin ? " cache" : "");
+    el("effacer").className = "bouton effacer" + (reussi || fin ? " cache" : "");
+    el("suivant").className = "bouton suivant" + (reussi ? "" : " cache");
+    el("consigne").className = "consigne" + (reussi ? " cache" : "");
+    el("bravo").className = "bravo" + (reussi ? "" : " cache");
+    el("confettis").setAttribute("class", "confettis" + (reussi ? "" : " cache"));
+    var masques = ["plateau", "cote", "menu"];
+    for (var j = 0; j < masques.length; j++) el(masques[j]).style.display = fin ? "none" : "";
+    el("fin").className = "fin" + (fin ? "" : " cache");
+  }
+
+  function afficherTextes() {
+    document.documentElement.lang = t("code_html");
+    document.title = t("titre");
+    el("titre").textContent = t("titre");
+    el("texte-niveau").textContent = t("niveau_x", { n: etat.index + 1, total: NIVEAUX.length });
+    el("consigne").textContent = t("consigne");
+    el("bravo").textContent = t("bravo");
+    el("fin-bravo").textContent = t("bravo");
+    el("titre-programme").textContent = t("mon_programme");
+    el("fleche-A").setAttribute("aria-label", t("avancer"));
+    el("fleche-G").setAttribute("aria-label", t("tourner_gauche"));
+    el("fleche-D").setAttribute("aria-label", t("tourner_droite"));
+    el("go-texte").textContent = t("go");
+    el("effacer-texte").textContent = t("effacer");
+    el("suivant-texte").textContent = t(etat.index === NIVEAUX.length - 1 ? "continuer" : "niveau_suivant");
+    el("menu-texte").textContent = t("retour_menu");
+    el("fin-menu-texte").textContent = t("retour_menu");
+    el("cases").setAttribute("aria-label", t("plateau", { taille: etat.niveau.taille }));
+    el("coquillage").setAttribute("aria-label", t("coquillage"));
+    el("crabe").setAttribute("aria-label", t("crabe", { direction: t(etat.orientation) }));
+    el("langues").setAttribute("aria-label", t("langue"));
+    var boutons = el("langues").getElementsByTagName("button");
+    for (var i = 0; i < boutons.length; i++) boutons[i].setAttribute("aria-pressed", String(boutons[i].getAttribute("data-langue") === langue));
+    dessinerEtoiles(el("etoiles"), 30);
+    dessinerEtoiles(el("fin-etoiles"), 56);
+    dessinerProgramme();
+    if (bulleCourante) montrerBulle(bulleCourante.titre, bulleCourante.texte);
+  }
+
+  function construireLangues() {
+    var html = "";
+    for (var code in TEXTES) if (TEXTES.hasOwnProperty(code))
+      html += '<button type="button" class="bouton-langue" data-langue="' + code + '" lang="' + TEXTES[code].code_html + '">' + TEXTES[code].nom_langue + '</button>';
+    el("langues").innerHTML = html;
+  }
+
+  // ---------- Niveaux ----------
+  function chargerNiveau(index) {
+    arreterMinuteries();
+    etat.index = index;
+    etat.niveau = NIVEAUX[index];
+    etat.depart = trouver(etat.niveau.grille, "S");
+    etat.arrivee = trouver(etat.niveau.grille, "E");
+    etat.programme = [];
+    etat.phase = "edition";
+    remettreAuDepart();
+    dessinerCases();
+    afficherTextes();
+    majBoutons();
+  }
+
+  // Le crabe revient au départ ; le programme, lui, reste dans la bande.
+  function remettreAuDepart() {
+    etat.position = { l: etat.depart.l, c: etat.depart.c };
+    etat.orientation = etat.niveau.orientation;
+    etat.traces = [];
+    etat.statuts = [];
+    cacherBulle(); cacherImpact();
+    el("crabe").className = "crabe";
+    dessinerTraces();
+    dessinerCrabe(false);
+  }
+
+  // ---------- Édition du programme ----------
+  function ajouterOrdre(ordre) {
+    if (etat.phase !== "edition") return;
+    if (etat.programme.length >= etat.niveau.emplacements) {
+      // Programme plein : on secoue la bande, sans rien ajouter.
+      var liste = el("programme");
+      liste.className = liste.className.replace(" plein", "");
+      void liste.offsetWidth;
+      liste.className += " plein";
+      annoncer(t("programme_plein"));
+      return;
+    }
+    if (bulleCourante) remettreAuDepart();
+    etat.programme.push(ordre);
+    etat.statuts = [];
+    dessinerProgramme();
+  }
+
+  function retirerOrdre(index) {
+    if (etat.phase !== "edition" || index < 0 || index >= etat.programme.length) return;
+    if (bulleCourante) remettreAuDepart();
+    etat.programme.splice(index, 1);      // les ordres suivants se décalent
+    etat.statuts = [];
+    dessinerProgramme();
+  }
+
+  function effacer() {
+    if (etat.phase !== "edition") return;
+    etat.programme = [];
+    remettreAuDepart();
+    dessinerProgramme();
+  }
+
+  // ---------- Exécution pas à pas ----------
+  function lancer() {
+    if (etat.phase !== "edition") return;            // un 2e clic sur « Go » pendant l'exécution ne fait rien
+    remettreAuDepart();
+    if (!etat.programme.length) { montrerBulle("oups", "programme_vide"); annoncer(t("programme_vide")); return; }
+    etat.phase = "execution";
+    majBoutons();
+    dessinerProgramme();
+    executer(0);
+  }
+
+  function executer(i) {
+    if (i >= etat.programme.length) { plus(echec, 300); return; }
+    for (var k = 0; k < i; k++) if (etat.statuts[k] !== "choc") etat.statuts[k] = "fait";
+    etat.statuts[i] = "actif";
+    dessinerProgramme();
+
+    var ordre = etat.programme[i], crabe = el("crabe");
+    crabe.className = "crabe";
+    cacherImpact();
+    if (ordre === "G" || ordre === "D") {
+      etat.orientation = tourner(etat.orientation, ordre === "G" ? -1 : 1);
+      dessinerCrabe(false);
+      plus(function () { executer(i + 1); }, DELAI_ORDRE);
+      return;
+    }
+    var pas = DEPLACEMENTS[etat.orientation], l = etat.position.l + pas[0], c = etat.position.c + pas[1];
+    if (estMur(l, c)) {
+      // Mur ou bord : le crabe se secoue sur place, « Oups ! », puis on passe à l'ordre suivant.
+      etat.statuts[i] = "choc";
+      dessinerProgramme();
+      void crabe.offsetWidth;
+      crabe.className = "crabe choc";
+      montrerImpact(etat.orientation);
+      montrerBulle("oups", null);
+      annoncer(t("oups"));
+      plus(function () { cacherBulle(); cacherImpact(); crabe.className = "crabe"; executer(i + 1); }, DUREE_OUPS);
+      return;
+    }
+    etat.traces.push({ l: etat.position.l, c: etat.position.c, direction: etat.orientation });
+    etat.position = { l: l, c: c };
+    dessinerTraces();
+    dessinerCrabe(false);
+    if (l === etat.arrivee.l && c === etat.arrivee.c) {
+      // Coquillage atteint : réussite immédiate, les ordres restants sont ignorés.
+      etat.statuts[i] = "fait";
+      plus(reussite, 450);
+      return;
+    }
+    plus(function () { executer(i + 1); }, DELAI_ORDRE);
+  }
+
+  function reussite() {
+    etat.phase = "reussi";
+    for (var k = 0; k < etat.statuts.length; k++) if (etat.statuts[k] === "actif") etat.statuts[k] = "fait";
+    memoriserReussite(etat.niveau.id);
+    dessinerCrabe(true);
+    el("crabe").className = "crabe content";
+    majBoutons();
+    afficherTextes();
+    annoncer(t("bravo"));
+    el("suivant").focus();
+  }
+
+  function echec() {
+    // Fin du programme sans coquillage : retour au départ, le programme reste à corriger.
+    etat.phase = "edition";
+    remettreAuDepart();
+    majBoutons();
+    dessinerProgramme();
+    montrerBulle("oups", "essaie_encore");
+    annoncer(t("oups") + " " + t("essaie_encore"));
+  }
+
+  function suivant() {
+    if (etat.phase !== "reussi") return;
+    if (etat.index < NIVEAUX.length - 1) { chargerNiveau(etat.index + 1); return; }
+    etat.phase = "fin";
+    majBoutons();
+    afficherTextes();
+    annoncer(t("bravo") + " " + t("fin"));
+    el("fin-menu").focus();
+  }
+
+  function retourMenu() {
+    window.location.href = "../index.html?lang=" + langue;
+  }
+
+  function changerLangue(code) {
+    if (!TEXTES[code]) return;
+    langue = code;
+    ecrire(CLE_LANGUE, code);
+    afficherTextes();          // ne touche pas à l'exécution en cours
+  }
+
+  // ---------- Mise à l'échelle (même technique que le lanceur) ----------
+  function mettreAEchelle() {
+    var largeur = document.documentElement.clientWidth, hauteur = document.documentElement.clientHeight;
+    var echelle = Math.min(largeur / 1024, hauteur / 768);
+    var transformation = "translate(" + (largeur - 1024 * echelle) / 2 + "px," + (hauteur - 768 * echelle) / 2 + "px) scale(" + echelle + ")";
+    el("scene").style.webkitTransform = transformation;
+    el("scene").style.transform = transformation;
+  }
+
+  // ---------- Événements ----------
+  function surClic(id, fonction) { el(id).addEventListener("click", fonction); }
+  surClic("fleche-A", function () { ajouterOrdre("A"); });
+  surClic("fleche-G", function () { ajouterOrdre("G"); });
+  surClic("fleche-D", function () { ajouterOrdre("D"); });
+  surClic("go", lancer);
+  surClic("effacer", effacer);
+  surClic("suivant", suivant);
+  surClic("menu", retourMenu);
+  surClic("fin-menu", retourMenu);
+  el("programme").addEventListener("click", function (evenement) {
+    var cible = evenement.target;
+    while (cible && cible !== this && !cible.getAttribute("data-index")) cible = cible.parentNode;
+    if (cible && cible !== this) retirerOrdre(Number(cible.getAttribute("data-index")));
+  });
+  el("langues").addEventListener("click", function (evenement) {
+    var code = evenement.target.getAttribute && evenement.target.getAttribute("data-langue");
+    if (code) changerLangue(code);
+  });
+
+  // Clavier : flèches = ordres, Entrée = Go (hors bouton focalisé), Retour arrière = retirer le dernier ordre.
+  document.addEventListener("keydown", function (evenement) {
+    var touche = evenement.key || "", code = evenement.keyCode;
+    var surBouton = document.activeElement && document.activeElement.tagName === "BUTTON";
+    if (touche === "ArrowUp" || touche === "Up" || code === 38) { evenement.preventDefault(); ajouterOrdre("A"); }
+    else if (touche === "ArrowLeft" || touche === "Left" || code === 37) { evenement.preventDefault(); ajouterOrdre("G"); }
+    else if (touche === "ArrowRight" || touche === "Right" || code === 39) { evenement.preventDefault(); ajouterOrdre("D"); }
+    else if (touche === "Backspace" || code === 8) { evenement.preventDefault(); retirerOrdre(etat.programme.length - 1); }
+    else if ((touche === "Enter" || code === 13) && !surBouton) { evenement.preventDefault(); if (etat.phase === "reussi") suivant(); else lancer(); }
+  });
+
+  window.addEventListener("resize", mettreAEchelle);
+
+  // ---------- Démarrage : premier niveau non réussi ----------
+  ecrire(CLE_LANGUE, langue);
+  construireLangues();
+  mettreAEchelle();
+  var depart = 0;
+  while (depart < NIVEAUX.length - 1 && niveauReussi(NIVEAUX[depart].id)) depart++;
+  if (progression.serie_terminee) depart = 0;
+  chargerNiveau(depart);
+
+  // Accès pour les tests automatisés (sans effet pour l'enfant).
+  window.labyrinthe = { etat: etat, chargerNiveau: chargerNiveau, ajouterOrdre: ajouterOrdre, lancer: lancer };
+})();
+  </script>
+</body>
+</html>
