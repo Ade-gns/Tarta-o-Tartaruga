@@ -1,4 +1,6 @@
-/* Lanceur Tarta-na-Praia — maquette « A · Plage illustrée », scène 1024×768 mise à l'échelle par lanceur.js. */
+/* Lanceur Tarta-na-Praia — maquette « A · Plage illustrée ».
+   Le décor couvre toute la fenêtre ; chaque bloc garde les proportions de la maquette (tailles en px de maquette)
+   et lanceur.js (mettreEnPage) le place et le met à l'échelle selon la taille de la fenêtre. */
 @font-face { font-family:"Fredoka"; src:url("../polices/fredoka-latin.woff2") format("woff2"); font-weight:300 700; font-style:normal; font-display:swap; }
 @font-face { font-family:"Nunito"; src:url("../polices/nunito-latin.woff2") format("woff2"); font-weight:200 1000; font-style:normal; font-display:swap; }
 
@@ -8,21 +10,22 @@
   --ombre-decalee:rgba(21,54,31,.28);
 }
 * { box-sizing:border-box; }
-html, body { margin:0; height:100%; overflow:hidden; background:var(--encre); }
+html, body { margin:0; width:100%; height:100%; height:100dvh; overflow:hidden; background:#9ADDF7; }
 body { font-family:"Nunito", system-ui, sans-serif; color:var(--encre); }
 button, input { font-family:inherit; }
 
-/* position:fixed : la scène non réduite ne doit pas élargir la page (sinon les navigateurs mobiles dézooment). */
-.scene { position:fixed; left:0; top:0; width:1024px; height:768px; overflow:hidden; transform-origin:0 0; background:#9ADDF7; }
-.decor, .decor > svg { position:absolute; left:0; top:0; width:1024px; height:768px; }
+.scene { position:fixed; left:0; top:0; width:100%; height:100%; overflow:hidden; background:#9ADDF7; }
+.decor, .decor > svg { position:absolute; left:0; top:0; width:100%; height:100%; display:block; }
+/* Blocs placés par mettreEnPage() : position et échelle calculées, origine en haut à gauche. */
+.bandeau, .mascotte, .panneau, .barre, .plein-ecran { transform-origin:0 0; }
 
-.bandeau { position:absolute; left:192px; top:18px; width:640px; height:100px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--dore); border:4px solid var(--encre); border-radius:50px; box-shadow:0 6px 0 var(--ombre-decalee); text-align:center; }
+.bandeau { position:absolute; left:0; top:0; width:640px; height:100px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--dore); border:4px solid var(--encre); border-radius:50px; box-shadow:0 6px 0 var(--ombre-decalee); text-align:center; }
 .titre { margin:0; font-family:"Fredoka", sans-serif; font-weight:600; font-size:54px; line-height:1; color:var(--encre); }
 .sous-titre { margin:6px 0 0; font-size:24px; font-weight:800; line-height:1; color:var(--encre); }
 
-.mascotte { position:absolute; left:14px; top:418px; width:290px; height:246px; }
+.mascotte { position:absolute; left:0; top:0; width:290px; height:246px; }
 
-.panneau { position:absolute; left:308px; top:134px; width:692px; height:530px; padding:22px 24px; background:#fff; border:4px solid var(--encre); border-radius:34px; box-shadow:0 8px 0 var(--ombre-decalee); }
+.panneau { position:absolute; left:0; top:0; width:692px; height:530px; padding:22px 24px; background:#fff; border:4px solid var(--encre); border-radius:34px; box-shadow:0 8px 0 var(--ombre-decalee); }
 .liste { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
 .ligne { width:100%; height:86px; display:flex; align-items:center; gap:18px; padding:0 14px; text-align:left; cursor:pointer; color:var(--encre); background:var(--creme); border:3px solid #E6D49B; border-radius:26px; transition:transform .12s, background .12s, box-shadow .12s; }
 .ligne.disponible { background:#E3F8F5; border-color:var(--encre); }
@@ -42,8 +45,11 @@ button, input { font-family:inherit; }
 .termine { flex:none; display:flex; align-items:center; gap:6px; padding:6px 12px; background:#FFF3C4; border:2px solid var(--encre); border-radius:999px; font-size:18px; font-weight:800; color:var(--encre); }
 .bientot { flex:none; display:flex; align-items:center; gap:8px; padding:8px 14px; background:#fff; border:2px solid #8E9DA2; border-radius:999px; font-size:20px; font-weight:800; color:#2E3B40; }
 
-.barre { position:absolute; left:24px; right:24px; top:676px; height:84px; display:flex; align-items:center; gap:20px; padding:0 8px 0 22px; background:#fff; border:4px solid var(--encre); border-radius:42px; box-shadow:0 5px 0 var(--ombre-decalee); }
+.barre { position:absolute; left:0; top:0; width:976px; height:84px; display:flex; align-items:center; gap:20px; padding:0 8px 0 22px; background:#fff; border:4px solid var(--encre); border-radius:42px; box-shadow:0 5px 0 var(--ombre-decalee); }
 .date-boite { flex:1; min-width:0; display:flex; align-items:center; gap:12px; }
+/* Barre étroite (portrait) : la date passe sur sa propre ligne, au-dessus de la langue et du prénom. */
+.barre.etroite { height:156px; flex-wrap:wrap; align-content:center; justify-content:space-between; row-gap:10px; padding:0 22px; border-radius:42px; }
+.barre.etroite .date-boite { flex:1 0 100%; justify-content:center; }
 .date-boite > svg { flex:none; }
 .date { font-family:"Fredoka", sans-serif; font-weight:500; font-size:24px; line-height:1.1; }
 .langues { flex:none; display:flex; gap:6px; padding:3px; background:#E4F6F3; border:3px solid var(--encre); border-radius:36px; }
@@ -55,6 +61,12 @@ button, input { font-family:inherit; }
 .champ input { width:250px; height:60px; padding:0 22px; border:3px solid var(--encre); border-radius:30px; background:var(--creme); font-size:22px; font-weight:800; color:var(--encre); }
 .champ input::placeholder { color:#4F6B5B; opacity:1; }
 .champ input:focus-visible { outline:5px solid var(--focus); outline-offset:2px; }
+
+/* Bouton plein écran : icône seule, masqué si l'API Fullscreen n'existe pas. */
+.plein-ecran { position:absolute; left:0; top:0; width:70px; height:70px; padding:0; display:flex; align-items:center; justify-content:center; background:#fff; border:4px solid var(--encre); border-radius:22px; box-shadow:0 5px 0 var(--ombre-decalee); cursor:pointer; }
+.plein-ecran[hidden] { display:none; }
+.plein-ecran:focus-visible { outline:5px solid var(--focus); outline-offset:3px; }
+.plein-ecran:active { box-shadow:none; }
 
 .vagues { animation:vague 9s linear infinite; }
 .vagues-lentes { animation-duration:15s; }

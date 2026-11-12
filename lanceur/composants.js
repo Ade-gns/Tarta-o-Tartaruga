@@ -2,29 +2,31 @@
 // Composants du lanceur (maquette « A · Plage illustrée »). Chaque fonction renvoie du SVG ou un élément prêt à insérer.
 // Les textes sont posés plus tard par lanceur.js grâce aux attributs data-texte, data-texte-aria et data-texte-exemple.
 const Composants = (() => {
-  const vague = (y, couleur, epaisseur, opacite, classe) => `<g class="${classe}"><path d="M-100 ${y} q25 -10 50 0${" t50 0".repeat(26)}" fill="none" stroke="${couleur}" stroke-width="${epaisseur}" stroke-linecap="round" opacity="${opacite}"/></g>`;
+  const vague = (y, couleur, epaisseur, opacite, classe) => `<g class="${classe}"><path d="M-100 ${y} q25 -10 50 0${" t50 0".repeat(80)}" fill="none" stroke="${couleur}" stroke-width="${epaisseur}" stroke-linecap="round" opacity="${opacite}"/></g>`;
   const rayons = Array.from({length:12}, (_, i) => `<path d="M0 -54 V-68" transform="rotate(${i*30})"/>`).join("");
   const palme = transformation => `<path d="M0 0 C20 -34 78 -44 116 -6 C82 -22 36 -14 0 0 Z" transform="${transformation}"/>`;
   const grains = [[44,560],[130,606],[262,582],[340,716],[520,722],[700,718],[900,724],[980,690]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="3"/>`).join("");
 
+  // Le décor couvre toute la fenêtre : lanceur.js règle son viewBox sur la taille de la fenêtre (en unités de maquette)
+  // et décale les groupes « ancre-droite » et « ancre-bas ». Les bandes de ciel, mer et sable font 100 % de large.
   function decor() {
-    return `<svg aria-hidden="true" viewBox="0 0 1024 768" width="1024" height="768">
+    return `<svg aria-hidden="true" id="decor-svg" viewBox="0 0 1024 768" preserveAspectRatio="xMinYMin meet">
 <defs>
 <linearGradient id="degrade-ciel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ADDF7"/><stop offset="1" stop-color="#E6F9FF"/></linearGradient>
 <linearGradient id="degrade-mer" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#169FC6"/><stop offset="1" stop-color="#22C7C8"/></linearGradient>
 </defs>
-<rect width="1024" height="270" fill="url(#degrade-ciel)"/>
+<rect width="100%" height="270" fill="url(#degrade-ciel)"/>
 <g transform="translate(24 36)" fill="#fff"><circle cx="30" cy="34" r="18"/><circle cx="56" cy="24" r="24"/><circle cx="84" cy="36" r="16"/><rect x="14" y="36" width="84" height="14" rx="7"/></g>
-<g transform="translate(936 66)"><g stroke="#FFC93C" stroke-width="8" stroke-linecap="round">${rayons}</g><circle r="40" fill="#FFD34D" stroke="#15361F" stroke-width="4"/></g>
-<rect y="262" width="1024" height="240" fill="url(#degrade-mer)"/>
+<g id="ancre-droite"><g transform="translate(936 66)"><g stroke="#FFC93C" stroke-width="8" stroke-linecap="round">${rayons}</g><circle r="40" fill="#FFD34D" stroke="#15361F" stroke-width="4"/></g></g>
+<rect y="262" width="100%" height="240" fill="url(#degrade-mer)"/>
 ${vague(300, "#9AF2E8", 5, .75, "vagues")}
 ${vague(346, "#FFFCF2", 4, .5, "vagues vagues-lentes")}
 ${vague(398, "#9AF2E8", 5, .6, "vagues")}
-<rect y="488" width="1024" height="48" fill="#E7B563"/>
-<rect y="534" width="1024" height="234" fill="#F7CF73"/>
-<path d="M0 492 q32 -18 64 0${" t64 0".repeat(16)}" fill="none" stroke="#FFFCF2" stroke-width="12" stroke-linecap="round"/>
-<g fill="#E0AA45">${grains}</g>
-<polygon transform="translate(227 28)" points="45,604 49.1,614.3 60.2,615.1 51.7,622.2 54.4,632.9 45,627 35.6,632.9 38.3,622.2 29.8,615.1 40.9,614.3" fill="#FF6A3A" stroke="#15361F" stroke-width="3" stroke-linejoin="round"/>
+<rect y="488" width="100%" height="48" fill="#E7B563"/>
+<rect y="534" width="100%" height="5000" fill="#F7CF73"/>
+<path d="M0 492 q32 -18 64 0${" t64 0".repeat(60)}" fill="none" stroke="#FFFCF2" stroke-width="12" stroke-linecap="round"/>
+<g id="ancre-bas"><g fill="#E0AA45">${grains}</g>
+<polygon transform="translate(227 28)" points="45,604 49.1,614.3 60.2,615.1 51.7,622.2 54.4,632.9 45,627 35.6,632.9 38.3,622.2 29.8,615.1 40.9,614.3" fill="#FF6A3A" stroke="#15361F" stroke-width="3" stroke-linejoin="round"/></g>
 <g transform="translate(150 316)">
 <path d="M-8 30 q14 -8 28 0 t28 0 t28 0 t28 0" fill="none" stroke="#FFFCF2" stroke-width="5" stroke-linecap="round" opacity=".8"/>
 <path d="M55 0 V-52" stroke="#15361F" stroke-width="4" stroke-linecap="round"/>

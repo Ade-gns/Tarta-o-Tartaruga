@@ -62,7 +62,7 @@ Le nombre de blocs n'est pas limité : un enfant peut aussi réussir en posant l
 
 Le code est en HTML, CSS et JavaScript simples, sans framework ni étape de compilation. Les scripts sont classiques (pas de modules ES), car les modules sont bloqués quand on ouvre une page par double-clic (`file://`).
 
-Le lanceur et l'écran de victoire sont conçus en 1024 × 768 et mis à l'échelle pour remplir la fenêtre, à la manière d'une diapositive.
+Le lanceur et le labyrinthe occupent tout l'écran, quel que soit son format (16:9, 4:3, tablette en paysage ou en portrait). Le décor s'étend jusqu'aux bords sans se déformer, et chaque bloc garde les proportions de sa maquette, mis à l'échelle et placé par `mettreEnPage()`. Un bouton en haut à droite passe en plein écran quand le navigateur le permet. L'écran de victoire, lui, est encore une scène 1024 × 768 mise à l'échelle.
 
 ## Ajouter un niveau
 

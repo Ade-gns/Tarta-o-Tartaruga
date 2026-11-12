@@ -32,14 +32,50 @@ function afficherTextes() {
   document.querySelectorAll("[data-texte-exemple]").forEach(noeud => noeud.placeholder = t(noeud.dataset.texteExemple));
   document.querySelectorAll(".bouton-langue").forEach(bouton => bouton.setAttribute("aria-pressed", String(bouton.dataset.langue === langue)));
   el("date").textContent = dateDuJour();
+  majPleinEcran();
 }
 
 function changerLangue(code) { langue = TEXTES_LANCEUR[code] ? code : "fr"; ecrire(CLE_LANGUE, langue); afficherTextes(); }
 
-// La scène garde ses dimensions de maquette et est agrandie ou réduite pour remplir la fenêtre.
-function ajusterEchelle() {
-  const largeur = document.documentElement.clientWidth, hauteur = document.documentElement.clientHeight, echelle = Math.min(largeur / LARGEUR_SCENE, hauteur / HAUTEUR_SCENE);
-  el("scene").style.transform = `translate(${(largeur - LARGEUR_SCENE * echelle) / 2}px, ${(hauteur - HAUTEUR_SCENE * echelle) / 2}px) scale(${echelle})`;
+// Mise en page plein écran. Les tailles des blocs sont celles de la maquette (unités de maquette) ;
+// l'échelle e convertit en pixels. Deux dispositions : paysage (maquette 1024×768) et portrait (empilée,
+// prévue pour 740×1018), et on garde celle qui permet les plus grands blocs.
+function placer(id, x, y, e, largeur) {
+  const bloc = el(id);
+  bloc.style.left = `${x * e}px`; bloc.style.top = `${y * e}px`;
+  bloc.style.transform = `scale(${e})`;
+  if (largeur !== undefined) bloc.style.width = `${largeur}px`;
+}
+function mettreEnPage() {
+  const L = document.documentElement.clientWidth, H = document.documentElement.clientHeight;
+  const ePaysage = Math.min(L / LARGEUR_SCENE, H / HAUTEUR_SCENE), ePortrait = Math.min(L / 740, H / 1018);
+  const portrait = ePortrait > ePaysage, e = portrait ? ePortrait : ePaysage;
+  const largeur = L / e, hauteur = H / e;                       // fenêtre en unités de maquette
+  const largeurBandeau = Math.min(640, largeur - 196);          // laisse la place du bouton plein écran
+  placer("bandeau", (largeur - largeurBandeau) / 2, 18, e, largeurBandeau);
+  placer("plein-ecran", largeur - 82, 18, e);
+  const etroite = largeur - 48 < 900, hauteurBarre = etroite ? 156 : 84;   // barre étroite : date sur une 2e ligne
+  el("barre").classList.toggle("etroite", etroite);
+  placer("barre", 24, hauteur - 8 - hauteurBarre, e, largeur - 48);       // collée en bas, sur toute la largeur
+  placer("mascotte", 14, hauteur - 20 - hauteurBarre - 246, e);           // coin bas gauche, au-dessus de la barre
+  // Panneau : centré dans l'espace libre (à droite de la tortue en paysage, entre le bandeau et la tortue en portrait).
+  const xPanneau = portrait ? (largeur - 692) / 2 : Math.max(308, (largeur - 692) / 2);
+  const yPanneau = portrait ? Math.max(134, (118 + hauteur - 278 - hauteurBarre) / 2 - 269) : Math.max(134, (118 + hauteur - 8 - hauteurBarre) / 2 - 265);
+  placer("panneau", xPanneau, yPanneau, e);
+  // Décor : le viewBox couvre toute la fenêtre, sans déformation ; soleil à droite, sable et étoile de mer en bas.
+  el("decor-svg").setAttribute("viewBox", `0 0 ${largeur} ${hauteur}`);
+  el("ancre-droite").setAttribute("transform", `translate(${largeur - LARGEUR_SCENE} 0)`);
+  el("ancre-bas").setAttribute("transform", `translate(0 ${Math.max(0, hauteur - HAUTEUR_SCENE)})`);
+}
+
+// Plein écran : bouton masqué si l'API n'existe pas ; le jeu reste utilisable sans.
+const racine = document.documentElement;
+const demanderPleinEcran = racine.requestFullscreen || racine.webkitRequestFullscreen;
+function enPleinEcran() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function majPleinEcran() { el("plein-ecran").setAttribute("aria-label", t(enPleinEcran() ? "quitter_plein_ecran" : "plein_ecran")); }
+function basculerPleinEcran() {
+  if (enPleinEcran()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  else { const promesse = demanderPleinEcran.call(racine); if (promesse && promesse.catch) promesse.catch(() => {}); }
 }
 
 function construire() {
@@ -62,6 +98,12 @@ const langueDemandee = new URLSearchParams(window.location.search).get("lang"), 
 if (langueDemandee && TEXTES_LANCEUR[langueDemandee]) { langue = langueDemandee; ecrire(CLE_LANGUE, langue); }
 else if (langueSauvee && TEXTES_LANCEUR[langueSauvee]) langue = langueSauvee;
 construire();
+if (demanderPleinEcran && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+  el("plein-ecran").hidden = false;
+  el("plein-ecran").addEventListener("click", basculerPleinEcran);
+  ["fullscreenchange", "webkitfullscreenchange"].forEach(evenement => document.addEventListener(evenement, majPleinEcran));
+}
 afficherTextes();
-ajusterEchelle();
-window.addEventListener("resize", ajusterEchelle);
+mettreEnPage();
+window.addEventListener("resize", mettreEnPage);
+window.addEventListener("orientationchange", mettreEnPage);

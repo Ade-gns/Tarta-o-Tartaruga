@@ -5,7 +5,7 @@
 const TEXTES_LANCEUR = {
   fr: {
     code_html:"fr", locale:"fr-FR", langue_court:"FR", titre:"Tarta na Praia", sous_titre:"Apprends à programmer", tortue:"Tarta, la tortue",
-    activites:"Activités", bientot:"Bientôt", termine:"Terminé", groupe_langue:"Langue", prenom:"Prénom", prenom_exemple:"Écris ton prénom",
+    activites:"Activités", plein_ecran:"Plein écran", quitter_plein_ecran:"Quitter le plein écran", bientot:"Bientôt", termine:"Terminé", groupe_langue:"Langue", prenom:"Prénom", prenom_exemple:"Écris ton prénom",
     activite_tarta:"Tarta na Praia", aide_tarta:"Guide la tortue avec des blocs",
     activite_labyrinthe:"Le labyrinthe", aide_labyrinthe:"Trouve le chemin",
     activite_coquillages:"Les coquillages", aide_coquillages:"Retrouve les paires",
@@ -17,7 +17,7 @@ const TEXTES_LANCEUR = {
   },
   pt: {
     code_html:"pt-PT", locale:"pt-PT", langue_court:"PT", titre:"Tarta na Praia", sous_titre:"Aprende a programar", tortue:"Tarta, a tartaruga",
-    activites:"Atividades", bientot:"Em breve", termine:"Concluído", groupe_langue:"Língua", prenom:"Nome", prenom_exemple:"Escreve o teu nome",
+    activites:"Atividades", plein_ecran:"Ecrã inteiro", quitter_plein_ecran:"Sair do ecrã inteiro", bientot:"Em breve", termine:"Concluído", groupe_langue:"Língua", prenom:"Nome", prenom_exemple:"Escreve o teu nome",
     activite_tarta:"Tarta na Praia", aide_tarta:"Guia a tartaruga com blocos",
     activite_labyrinthe:"O labirinto", aide_labyrinthe:"Encontra o caminho",
     activite_coquillages:"As conchas", aide_coquillages:"Encontra os pares",
