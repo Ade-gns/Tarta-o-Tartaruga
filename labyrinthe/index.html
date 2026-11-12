@@ -106,12 +106,6 @@
     .bouton-langue { width:70px; height:70px; border:0; border-radius:35px; background:transparent; font-family:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif; font-weight:700; font-size:26px; cursor:pointer; }
     .bouton-langue[aria-pressed="true"] { background:#15361F; color:#fff; }
 
-    /* Écran de fin, après le dernier niveau */
-    .fin { position:absolute; left:16px; top:150px; width:992px; height:504px; display:flex; flex-direction:column; align-items:center; justify-content:space-around; padding:24px; background:#fff; border:4px solid #15361F; border-radius:40px; box-shadow:0 8px 0 rgba(21,54,31,.28); text-align:center; }
-    .fin .bravo { width:440px; }
-    .fin .crabe-fin { width:180px; height:180px; }
-    .fin .etoiles svg { margin:0 4px; }
-    .fin .bouton { position:static; width:420px; font-size:30px; }
 
     @media (prefers-reduced-motion:reduce) {
       .crabe, .crabe .corps, .fleche, .bouton { -webkit-transition:none; transition:none; }
@@ -355,13 +349,6 @@
     <button type="button" class="bouton menu" id="menu"><svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true"><path d="M9 18 V32 H29 V18" fill="#FFF9E6" stroke="#15361F" stroke-width="4.5" stroke-linejoin="round"/><path d="M5 19 L19 6 L33 19" fill="none" stroke="#15361F" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="16" y="23" width="6" height="9" fill="#15361F"/></svg><span id="menu-texte"></span></button>
     <div class="langues" id="langues" role="group"></div>
 
-    <!-- Écran de fin (après le dernier niveau) : volontairement simple -->
-    <section class="fin cache" id="fin">
-      <p class="bravo" id="fin-bravo"></p>
-      <svg class="crabe-fin" viewBox="0 0 100 100" aria-hidden="true"><use xlink:href="#dessin-crabe-face" href="#dessin-crabe-face"/></svg>
-      <div class="etoiles" id="fin-etoiles" role="img"></div>
-      <button type="button" class="bouton menu" id="fin-menu"><svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true"><path d="M9 18 V32 H29 V18" fill="#FFF9E6" stroke="#15361F" stroke-width="4.5" stroke-linejoin="round"/><path d="M5 19 L19 6 L33 19" fill="none" stroke="#15361F" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="16" y="23" width="6" height="9" fill="#15361F"/></svg><span id="fin-menu-texte"></span></button>
-    </section>
 
     <!-- Annonces pour les lecteurs d'écran (« Oups ! », « Bravo ! ») -->
     <p class="pour-lecteur" id="annonce" aria-live="assertive" role="status"></p>
@@ -430,8 +417,7 @@ var TEXTES = {
     retirer: "Retirer : {ordre}", emplacement_vide: "Emplacement vide",
     plateau: "Labyrinthe de {taille} cases sur {taille}", crabe: "Le crabe, tourné vers {direction}", coquillage: "Le coquillage",
     haut: "le haut", droite: "la droite", bas: "le bas", gauche: "la gauche",
-    programme_vide: "Ajoute des flèches", programme_plein: "Le programme est plein",
-    fin: "Tu as trouvé tous les coquillages !"
+    programme_vide: "Ajoute des flèches", programme_plein: "Le programme est plein"
   },
   pt: {
     code_html: "pt-PT", nom_langue: "PT",
@@ -443,8 +429,7 @@ var TEXTES = {
     retirer: "Tirar: {ordre}", emplacement_vide: "Espaço vazio",
     plateau: "Labirinto de {taille} por {taille} casas", crabe: "O caranguejo, virado para {direction}", coquillage: "A concha",
     haut: "cima", droite: "a direita", bas: "baixo", gauche: "a esquerda",
-    programme_vide: "Junta algumas setas", programme_plein: "O programa está cheio",
-    fin: "Encontraste todas as conchas!"
+    programme_vide: "Junta algumas setas", programme_plein: "O programa está cheio"
   }
 };
   </script>
@@ -459,6 +444,7 @@ var TEXTES = {
   var CLE_PROGRESSION = "labyrinthe_niveaux";    // { reussis: [ids], serie_terminee: bool }
   var DELAI_ORDRE = 500;                         // durée d'un ordre pendant l'exécution (ms)
   var DUREE_OUPS = 800;                          // durée de la bulle « Oups ! » sur un mur (ms)
+  var DELAI_VICTOIRE = 2500;                     // après le dernier niveau, avant l'écran de victoire (ms)
   var TAILLE_PLATEAU = 480;
   var DIRECTIONS = ["haut", "droite", "bas", "gauche"];
   var DEPLACEMENTS = { haut: [-1, 0], droite: [0, 1], bas: [1, 0], gauche: [0, -1] };
@@ -512,7 +498,7 @@ var TEXTES = {
     programme: [],        // ordres « A », « G », « D »
     statuts: [],          // état visuel de chaque emplacement : "", "actif", "fait", "choc"
     traces: [],           // { l, c, direction }
-    phase: "edition",     // edition | execution | reussi | fin
+    phase: "edition",     // edition | execution | reussi
     minuteries: []
   };
 
@@ -627,19 +613,16 @@ var TEXTES = {
   }
 
   function majBoutons() {
-    var edition = etat.phase === "edition", reussi = etat.phase === "reussi", fin = etat.phase === "fin";
+    var edition = etat.phase === "edition", reussi = etat.phase === "reussi";
     el("go").disabled = !edition; el("effacer").disabled = !edition;
     var fleches = ["A", "G", "D"];
     for (var i = 0; i < fleches.length; i++) el("fleche-" + fleches[i]).disabled = !edition;
-    el("go").className = "bouton go" + (reussi || fin ? " cache" : "");
-    el("effacer").className = "bouton effacer" + (reussi || fin ? " cache" : "");
+    el("go").className = "bouton go" + (reussi ? " cache" : "");
+    el("effacer").className = "bouton effacer" + (reussi ? " cache" : "");
     el("suivant").className = "bouton suivant" + (reussi ? "" : " cache");
     el("consigne").className = "consigne" + (reussi ? " cache" : "");
     el("bravo").className = "bravo" + (reussi ? "" : " cache");
     el("confettis").setAttribute("class", "confettis" + (reussi ? "" : " cache"));
-    var masques = ["plateau", "cote", "menu"];
-    for (var j = 0; j < masques.length; j++) el(masques[j]).style.display = fin ? "none" : "";
-    el("fin").className = "fin" + (fin ? "" : " cache");
   }
 
   function afficherTextes() {
@@ -649,7 +632,6 @@ var TEXTES = {
     el("texte-niveau").textContent = t("niveau_x", { n: etat.index + 1, total: NIVEAUX.length });
     el("consigne").textContent = t("consigne");
     el("bravo").textContent = t("bravo");
-    el("fin-bravo").textContent = t("bravo");
     el("titre-programme").textContent = t("mon_programme");
     el("fleche-A").setAttribute("aria-label", t("avancer"));
     el("fleche-G").setAttribute("aria-label", t("tourner_gauche"));
@@ -658,7 +640,6 @@ var TEXTES = {
     el("effacer-texte").textContent = t("effacer");
     el("suivant-texte").textContent = t(etat.index === NIVEAUX.length - 1 ? "continuer" : "niveau_suivant");
     el("menu-texte").textContent = t("retour_menu");
-    el("fin-menu-texte").textContent = t("retour_menu");
     el("cases").setAttribute("aria-label", t("plateau", { taille: etat.niveau.taille }));
     el("coquillage").setAttribute("aria-label", t("coquillage"));
     el("crabe").setAttribute("aria-label", t("crabe", { direction: t(etat.orientation) }));
@@ -666,7 +647,6 @@ var TEXTES = {
     var boutons = el("langues").getElementsByTagName("button");
     for (var i = 0; i < boutons.length; i++) boutons[i].setAttribute("aria-pressed", String(boutons[i].getAttribute("data-langue") === langue));
     dessinerEtoiles(el("etoiles"), 30);
-    dessinerEtoiles(el("fin-etoiles"), 56);
     dessinerProgramme();
     if (bulleCourante) montrerBulle(bulleCourante.titre, bulleCourante.texte);
   }
@@ -804,6 +784,8 @@ var TEXTES = {
     afficherTextes();
     annoncer(t("bravo"));
     el("suivant").focus();
+    // Dernier niveau : l'écran de victoire commun s'ouvre après les confettis (ou tout de suite avec « Continuer »).
+    if (etat.index === NIVEAUX.length - 1) plus(ouvrirVictoire, DELAI_VICTOIRE);
   }
 
   function echec() {
@@ -819,11 +801,11 @@ var TEXTES = {
   function suivant() {
     if (etat.phase !== "reussi") return;
     if (etat.index < NIVEAUX.length - 1) { chargerNiveau(etat.index + 1); return; }
-    etat.phase = "fin";
-    majBoutons();
-    afficherTextes();
-    annoncer(t("bravo") + " " + t("fin"));
-    el("fin-menu").focus();
+    ouvrirVictoire();
+  }
+
+  function ouvrirVictoire() {
+    window.location.href = "../victoire.html?type=labyrinthe&lang=" + langue;
   }
 
   function retourMenu() {
@@ -855,7 +837,6 @@ var TEXTES = {
   surClic("effacer", effacer);
   surClic("suivant", suivant);
   surClic("menu", retourMenu);
-  surClic("fin-menu", retourMenu);
   el("programme").addEventListener("click", function (evenement) {
     var cible = evenement.target;
     while (cible && cible !== this && !cible.getAttribute("data-index")) cible = cible.parentNode;

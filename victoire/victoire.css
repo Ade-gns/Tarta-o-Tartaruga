@@ -34,4 +34,14 @@ button { font-family:inherit; }
 .bouton.secondaire:hover { background:#E3F8F5; }
 .bouton:active { transform:translateY(3px); box-shadow:none; }
 .bouton:focus-visible { outline:5px solid var(--focus); outline-offset:3px; }
+/* Type « labyrinthe » (maquette « Victoire labyrinthe A ») : pas de carte, message en pastille sous le titre,
+   3 étoiles et deux grands boutons en bas. La carte devient un simple calque pleine scène. */
+.type-labyrinthe .bandeau { top:14px; height:100px; border-radius:50px; }
+.type-labyrinthe .titre { font-size:80px; }
+.type-labyrinthe .etoiles { top:198px; height:84px; }
+.type-labyrinthe .carte { left:0; top:0; width:1024px; height:768px; padding:0; background:none; border:0; border-radius:0; box-shadow:none; display:block; pointer-events:none; }
+.type-labyrinthe .message { position:absolute; left:182px; top:126px; width:660px; height:62px; display:flex; align-items:center; justify-content:center; background:#fff; border:4px solid var(--encre); border-radius:31px; box-shadow:0 5px 0 var(--ombre-decalee); font-size:32px; }
+.type-labyrinthe .boutons { position:absolute; left:100px; top:668px; width:824px; gap:24px; pointer-events:auto; }
+.type-labyrinthe .bouton { height:80px; border-radius:40px; font-size:32px; }
+
 @media (prefers-reduced-motion:reduce) { .bouton { transition:none; } .bouton:hover, .bouton:active { transform:none; } }

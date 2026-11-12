@@ -12,7 +12,8 @@ const TEXTES_LANCEUR = {
     activite_binaire:"Pixels en binaire", aide_binaire:"Colorie avec des 0 et des 1",
     activite_formes:"Les formes", aide_formes:"Trie les formes et les couleurs",
     victoire_titre:"Bravo\u00a0!", victoire_etoiles:"5 étoiles sur 5", victoire_message:"Tu as aidé la tortue à rejoindre la mer\u00a0!",
-    victoire_rejouer:"Rejouer", victoire_menu:"Retour au menu"
+    victoire_rejouer:"Rejouer", victoire_menu:"Retour au menu",
+    victoire_labyrinthe_message:"Tu as trouvé le chemin\u00a0!", victoire_labyrinthe_etoiles:"3 étoiles sur 3"
   },
   pt: {
     code_html:"pt-PT", locale:"pt-PT", langue_court:"PT", titre:"Tarta na Praia", sous_titre:"Aprende a programar", tortue:"Tarta, a tartaruga",
@@ -23,6 +24,7 @@ const TEXTES_LANCEUR = {
     activite_binaire:"Píxeis em binário", aide_binaire:"Pinta com 0 e 1",
     activite_formes:"As formas", aide_formes:"Ordena as formas e as cores",
     victoire_titre:"Parabéns!", victoire_etoiles:"5 estrelas em 5", victoire_message:"Ajudaste a tartaruga a chegar ao mar!",
-    victoire_rejouer:"Jogar outra vez", victoire_menu:"Voltar ao menu"
+    victoire_rejouer:"Jogar outra vez", victoire_menu:"Voltar ao menu",
+    victoire_labyrinthe_message:"Encontraste o caminho!", victoire_labyrinthe_etoiles:"3 estrelas em 3"
   }
 };

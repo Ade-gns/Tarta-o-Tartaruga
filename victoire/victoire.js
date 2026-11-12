@@ -1,7 +1,18 @@
 "use strict";
-// Écran de victoire, affiché par tarta.html quand le dernier niveau est réussi.
-// Textes : TEXTES_LANCEUR (lanceur/textes.js), langue partagée avec le lanceur et le jeu.
-const CLE_LANGUE = "tarta-na-praia-langue", CLE_PROGRESSION = "tarta-na-praia-progression";
+// Écran de victoire réutilisable : victoire.html?type=niveau5 (par défaut) ou ?type=labyrinthe, et ?lang=fr|pt.
+// Affiché par tarta.html après son dernier niveau et par labyrinthe/index.html après le sien.
+// Textes : TEXTES_LANCEUR (lanceur/textes.js), langue partagée avec le lanceur et les activités.
+const CLE_LANGUE = "tarta-na-praia-langue";
+// Un type = une illustration sans texte + les textes et la mise en page de sa maquette.
+// `rejouer` : page relancée depuis le début ; `progression` : clé effacée avant de rejouer.
+const TYPES = {
+  niveau5: { fond:"images/victoire-A.svg", message:"victoire_message", etoiles:[64, 72, 84, 72, 64], etiquetteEtoiles:"victoire_etoiles",
+    rejouer:"tarta.html", langueDansUrl:false, progression:"tarta-na-praia-progression" },
+  labyrinthe: { fond:"images/victoire-labyrinthe-A.svg", message:"victoire_labyrinthe_message", etoiles:[64, 84, 64], etiquetteEtoiles:"victoire_labyrinthe_etoiles",
+    rejouer:"labyrinthe/index.html", langueDansUrl:true, progression:"labyrinthe_niveaux" }
+};
+const parametres = new URLSearchParams(window.location.search);
+const nomType = TYPES[parametres.get("type")] ? parametres.get("type") : "niveau5", type = TYPES[nomType];
 const LARGEUR_SCENE = 1024, HAUTEUR_SCENE = 768;
 let langue = "fr";
 const el = id => document.getElementById(id);
@@ -21,19 +32,28 @@ function ajusterEchelle() {
   el("scene").style.transform = `translate(${(largeur - LARGEUR_SCENE * echelle) / 2}px, ${(hauteur - HAUTEUR_SCENE * echelle) / 2}px) scale(${echelle})`;
 }
 
-// Rejouer : oublie la partie en cours (pas la langue ni le prénom) et relance le niveau 1.
-function rejouer() { try { localStorage.removeItem(CLE_PROGRESSION); } catch(erreur) { console.warn("Effacement indisponible", erreur); } window.location.href = "tarta.html"; }
+// Rejouer : oublie la partie en cours de l'activité (pas la langue ni le prénom) et la relance au niveau 1.
+function rejouer() {
+  try { localStorage.removeItem(type.progression); } catch(erreur) { console.warn("Effacement indisponible", erreur); }
+  window.location.href = type.rejouer + (type.langueDansUrl ? `?lang=${langue}` : "");
+}
 
 function construire() {
-  el("etoiles").innerHTML = ComposantsVictoire.etoiles();
+  el("scene").classList.add(`type-${nomType}`);
+  el("fond").src = type.fond;
+  el("message").dataset.texte = type.message;
+  el("etoiles").dataset.texteAria = type.etiquetteEtoiles;
+  el("etoiles").innerHTML = ComposantsVictoire.etoiles(type.etoiles);
   el("rejouer").insertAdjacentHTML("afterbegin", ComposantsVictoire.icones.rejouer);
   el("menu").insertAdjacentHTML("afterbegin", ComposantsVictoire.icones.maison);
   el("rejouer").addEventListener("click", rejouer);
-  el("menu").addEventListener("click", () => { window.location.href = "index.html"; });
+  el("menu").addEventListener("click", () => { window.location.href = `index.html?lang=${langue}`; });
 }
 
-const langueSauvee = lire(CLE_LANGUE);
-if (langueSauvee && TEXTES_LANCEUR[langueSauvee]) langue = langueSauvee;
+// Langue : ?lang=, sinon celle mémorisée, sinon le français.
+const langueDemandee = parametres.get("lang"), langueSauvee = lire(CLE_LANGUE);
+if (langueDemandee && TEXTES_LANCEUR[langueDemandee]) langue = langueDemandee;
+else if (langueSauvee && TEXTES_LANCEUR[langueSauvee]) langue = langueSauvee;
 construire();
 afficherTextes();
 ajusterEchelle();

@@ -53,9 +53,9 @@ Le nombre de blocs n'est pas limité : un enfant peut aussi réussir en posant l
 | `labyrinthe/` | Activité « Le labyrinthe » : page autonome, scripts de vérification des niveaux et des langues, et son propre `LISEZMOI.md`. |
 | `lanceur/` | Style (`lanceur.css`), textes FR/PT (`textes.js`), décor, tortue, icônes, ligne d'activité et barre du bas (`composants.js`), logique (`lanceur.js`). |
 | `tarta.html` | Le jeu, complet et autonome : HTML, CSS, JavaScript, textes FR/PT et visuels de la grille (sprites SVG intégrés). |
-| `victoire.html` | Écran de victoire. |
+| `victoire.html` | Écran de victoire réutilisable : `?type=niveau5` (après le niveau 5 de Tarta, par défaut) ou `?type=labyrinthe` (après le niveau 5 du labyrinthe), et `?lang=fr` ou `pt`. Les types sont décrits dans `TYPES` (`victoire/victoire.js`). |
 | `victoire/` | Style (`victoire.css`), étoiles et icônes des boutons (`composants.js`), logique (`victoire.js`). |
-| `images/victoire-A.svg` | Illustration de fond de l'écran de victoire. À utiliser telle quelle. |
+| `images/` | Illustrations sans texte des écrans de victoire (`victoire-A.svg`, `victoire-labyrinthe-A.svg`). À utiliser telles quelles : les textes sont en HTML. |
 | `polices/` | Fredoka et Nunito (woff2, sous-ensemble latin) et leurs licences OFL. |
 | `verifier_langues.js` | Vérifie que chaque langue contient toutes les clés de texte. |
 | `docs/` | Captures d'écran de ce README. |
