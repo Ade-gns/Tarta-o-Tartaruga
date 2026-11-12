@@ -8,7 +8,7 @@ Tout est dans `index.html` : HTML, CSS, JavaScript et dessins SVG. La page fonct
 
 | Bloc | Contenu |
 |---|---|
-| `<style>` | Mise en page 1024 × 768, mise à l'échelle pour remplir la fenêtre. |
+| `<style>` | Mise en page 1024 × 768, mise à l'échelle pour remplir la fenêtre. Les polices Fredoka et Nunito (copies de `../polices/`, licence OFL) y sont intégrées en base64 : en `file://`, Firefox refuse une police placée dans un dossier parent. |
 | `<svg>` de symboles `dessin-…` | Sable, rocher, muret, coquillage, traces de pas, crabe (dos, côté, face, tête), flèches, étoile. |
 | `<script id="donnees-niveaux">` | Les niveaux : uniquement des données. |
 | `<script id="donnees-textes">` | Les textes FR et PT. |
