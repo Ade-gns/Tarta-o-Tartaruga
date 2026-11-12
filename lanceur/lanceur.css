@@ -39,6 +39,7 @@ button, input { font-family:inherit; }
 .nom { display:block; font-family:"Fredoka", sans-serif; font-weight:600; font-size:28px; line-height:1.1; }
 .aide { display:block; margin-top:3px; font-size:20px; font-weight:700; line-height:1.2; color:#2F4A3A; }
 .ligne:disabled .aide { color:#4C5A5F; }
+.termine { flex:none; display:flex; align-items:center; gap:6px; padding:6px 12px; background:#FFF3C4; border:2px solid var(--encre); border-radius:999px; font-size:18px; font-weight:800; color:var(--encre); }
 .bientot { flex:none; display:flex; align-items:center; gap:8px; padding:8px 14px; background:#fff; border:2px solid #8E9DA2; border-radius:999px; font-size:20px; font-weight:800; color:#2E3B40; }
 
 .barre { position:absolute; left:24px; right:24px; top:676px; height:84px; display:flex; align-items:center; gap:20px; padding:0 8px 0 22px; background:#fff; border:4px solid var(--encre); border-radius:42px; box-shadow:0 5px 0 var(--ombre-decalee); }

@@ -1,8 +1,9 @@
 "use strict";
 // Lanceur : liste des activités, langue, prénom et mise à l'échelle de la scène 1024×768.
 // Pour brancher une activité, donner à son entrée le chemin de sa page dans `page`.
+// `progression` (facultatif) : clé où l'activité enregistre `serie_terminee` ; le lanceur affiche alors « Terminé ».
 const ACTIVITES = [
-  { id:"tarta", page:"tarta.html" },
+  { id:"tarta", page:"tarta.html", progression:"tarta-na-praia-progression" },
   { id:"labyrinthe", page:null },
   { id:"coquillages", page:null },
   { id:"binaire", page:null },
@@ -15,6 +16,7 @@ const el = id => document.getElementById(id);
 
 function lire(cle) { try { return localStorage.getItem(cle); } catch(erreur) { console.warn("Lecture indisponible", erreur); return null; } }
 function ecrire(cle, valeur) { try { localStorage.setItem(cle, valeur); } catch(erreur) { console.warn("Mémorisation indisponible", erreur); } }
+function serieTerminee(activite) { if (!activite.progression) return false; try { return JSON.parse(lire(activite.progression) || "{}").serie_terminee === true; } catch(erreur) { return false; } }
 function t(cle) { const texte = (TEXTES_LANCEUR[langue] || TEXTES_LANCEUR.fr)[cle]; if (texte === undefined) { console.warn(`Clé de traduction manquante: ${cle}`); return TEXTES_LANCEUR.fr[cle] ?? cle; } return texte; }
 
 function dateDuJour() {
@@ -43,7 +45,7 @@ function construire() {
   el("decor").innerHTML = Composants.decor();
   el("mascotte").innerHTML = Composants.tortue();
   ACTIVITES.forEach(activite => {
-    const ligne = Composants.ligneActivite(activite);
+    const ligne = Composants.ligneActivite(activite, serieTerminee(activite));
     if (activite.page) ligne.querySelector("button").addEventListener("click", () => { window.location.href = activite.page; });
     el("activites").append(ligne);
   });

@@ -105,13 +105,15 @@ ${palme("rotate(-30)")}${palme("rotate(15)")}${palme("scale(-1 1) rotate(-30)")}
   const pastilleJouer = `<svg class="jouer" viewBox="0 0 56 56" aria-hidden="true"><circle class="jouer-fond" cx="28" cy="28" r="25" fill="#FFC93C" stroke="#15361F" stroke-width="3.5"/><path class="jouer-triangle" d="M22 17 L40 28 L22 39 Z" fill="#15361F" stroke="#15361F" stroke-width="3" stroke-linejoin="round"/></svg>`;
   const etiquetteBientot = `<span class="bientot"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3 H18 M6 21 H18 M7 3 C7 9 12 10 12 12 C12 14 7 15 7 21 M17 3 C17 9 12 10 12 12 C12 14 17 15 17 21" fill="none" stroke="#2E3B40" stroke-width="2.4" stroke-linecap="round"/></svg><span data-texte="bientot"></span></span>`;
 
-  // Une activité sans page est affichée « Bientôt » et désactivée.
-  function ligneActivite(activite) {
+  const etiquetteTermine = `<span class="termine"><svg width="22" height="22" viewBox="-12 -12 24 24" aria-hidden="true"><polygon points="0,-10 2.6,-3.6 9.5,-3.1 4.3,1.4 5.9,8.1 0,4.5 -5.9,8.1 -4.3,1.4 -9.5,-3.1 -2.6,-3.6" fill="#FFC93C" stroke="#15361F" stroke-width="2" stroke-linejoin="round"/></svg><span data-texte="termine"></span></span>`;
+
+  // Une activité sans page est affichée « Bientôt » et désactivée ; une série terminée affiche « Terminé ».
+  function ligneActivite(activite, terminee = false) {
     const element = document.createElement("li");
     element.innerHTML = `<button type="button" class="ligne${activite.page ? " disponible" : ""}"${activite.page ? "" : " disabled"}>
 <svg class="icone" viewBox="0 0 64 64" aria-hidden="true">${icones[activite.id]}</svg>
 <span class="texte"><span class="nom" data-texte="activite_${activite.id}"></span><span class="aide" data-texte="aide_${activite.id}"></span></span>
-${activite.page ? pastilleJouer : etiquetteBientot}
+${terminee ? etiquetteTermine : ""}${activite.page ? pastilleJouer : etiquetteBientot}
 </button>`;
     return element;
   }

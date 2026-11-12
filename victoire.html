@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tarta na Praia</title>
+  <link rel="stylesheet" href="victoire/victoire.css">
+</head>
+<body>
+  <div class="scene" id="scene">
+    <img class="fond" src="images/victoire-A.svg" alt="" width="1024" height="768">
+    <header class="bandeau"><h1 class="titre" data-texte="victoire_titre"></h1></header>
+    <div class="etoiles" id="etoiles" role="img" data-texte-aria="victoire_etoiles"></div>
+    <main class="carte">
+      <p class="message" data-texte="victoire_message"></p>
+      <div class="boutons">
+        <button type="button" class="bouton principal" id="rejouer"><span data-texte="victoire_rejouer"></span></button>
+        <button type="button" class="bouton secondaire" id="menu"><span data-texte="victoire_menu"></span></button>
+      </div>
+    </main>
+  </div>
+  <script src="lanceur/textes.js"></script>
+  <script src="victoire/composants.js"></script>
+  <script src="victoire/victoire.js"></script>
+</body>
+</html>

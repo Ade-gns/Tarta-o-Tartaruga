@@ -1,0 +1,37 @@
+/* Écran de victoire — maquette « Victoire A · Tortue au centre », scène 1024×768 mise à l'échelle par victoire.js.
+   Polices et palette identiques au lanceur (lanceur/lanceur.css). */
+@font-face { font-family:"Fredoka"; src:url("../polices/fredoka-latin.woff2") format("woff2"); font-weight:300 700; font-style:normal; font-display:swap; }
+@font-face { font-family:"Nunito"; src:url("../polices/nunito-latin.woff2") format("woff2"); font-weight:200 1000; font-style:normal; font-display:swap; }
+
+:root {
+  --encre:#15361F; --dore:#FFC93C; --creme:#FFF9E6; --turquoise:#22C7C8; --turquoise-clair:#8EE6DD; --sable:#F7CF73;
+  --vert-tortue:#36A644; --vert-tortue-clair:#74CE57; --vert-tortue-peau:#A9E05E; --corail:#FF8C78; --focus:#0E64B0;
+  --ombre-decalee:rgba(21,54,31,.28);
+}
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; overflow:hidden; background:var(--encre); }
+body { font-family:"Nunito", system-ui, sans-serif; color:var(--encre); }
+button { font-family:inherit; }
+
+/* position:fixed : la scène non réduite ne doit pas élargir la page (sinon les navigateurs mobiles dézooment). */
+.scene { position:fixed; left:0; top:0; width:1024px; height:768px; overflow:hidden; transform-origin:0 0; background:#169FC6; }
+.fond { position:absolute; left:0; top:0; width:1024px; height:768px; display:block; }
+
+.bandeau { position:absolute; left:142px; top:18px; width:740px; height:112px; display:flex; align-items:center; justify-content:center; background:var(--dore); border:4px solid var(--encre); border-radius:56px; box-shadow:0 6px 0 var(--ombre-decalee); }
+.titre { margin:0; font-family:"Fredoka", sans-serif; font-weight:700; font-size:84px; line-height:1; }
+
+.etoiles { position:absolute; left:0; top:140px; width:1024px; height:86px; display:flex; align-items:center; justify-content:center; gap:14px; }
+
+.carte { position:absolute; left:142px; top:566px; width:740px; height:184px; padding:18px 22px; background:#fff; border:4px solid var(--encre); border-radius:40px; box-shadow:0 6px 0 var(--ombre-decalee); display:flex; flex-direction:column; align-items:center; justify-content:space-between; }
+.message { margin:0; text-align:center; font-weight:800; font-size:30px; line-height:1.2; white-space:nowrap; }
+.boutons { display:flex; gap:18px; width:100%; }
+.bouton { flex:1; height:76px; display:flex; align-items:center; justify-content:center; gap:12px; padding:0 8px; border:4px solid var(--encre); border-radius:38px; font-family:"Fredoka", sans-serif; font-weight:600; font-size:30px; line-height:1; color:var(--encre); cursor:pointer; box-shadow:0 5px 0 var(--ombre-decalee); transition:transform .12s; }
+.bouton > svg { flex:none; }
+.bouton.principal { background:var(--dore); }
+.bouton.secondaire { background:#fff; }
+.bouton:hover { transform:translateY(-2px); }
+.bouton.principal:hover { background:#FFD965; }
+.bouton.secondaire:hover { background:#E3F8F5; }
+.bouton:active { transform:translateY(3px); box-shadow:none; }
+.bouton:focus-visible { outline:5px solid var(--focus); outline-offset:3px; }
+@media (prefers-reduced-motion:reduce) { .bouton { transition:none; } .bouton:hover, .bouton:active { transform:none; } }
