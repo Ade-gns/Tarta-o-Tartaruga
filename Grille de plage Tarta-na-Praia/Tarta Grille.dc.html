@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/nocturne-ecbc1688-1b55-4763-8564-11eb87557b8f/styles.css">
+<script src="_ds/nocturne-ecbc1688-1b55-4763-8564-11eb87557b8f/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}
+a{color:var(--color-accent-300)}a:hover{color:var(--color-accent-200)}
+</style>
+</helmet>
+<section style="background:var(--color-bg);min-height:100vh;padding:48px 56px 64px;display:flex;flex-direction:column;gap:32px;min-width:1340px;box-sizing:border-box">
+  <header style="display:flex;flex-direction:column;gap:8px;max-width:760px">
+    <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-400)">Tour 1 · Grille de jeu</div>
+    <h1 style="margin:0;font-family:var(--font-heading);font-weight:500;font-size:32px;line-height:1.15">Tarta-na-Praia — grille de plage</h1>
+    <p style="margin:0;color:var(--color-neutral-300);font-size:15px;line-height:1.5;text-wrap:pretty">État initial : Tarta sur le sable en bas, mer en haut, but marqué par des anneaux d'écume.</p>
+  </header>
+  <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
+    <sc-for list="{{ variants }}" as="v" hint-placeholder-count="1">
+      <div id="{{ v.id }}" data-plage="{{ v.p }}" style="width:624px;display:flex;flex-direction:column;gap:20px;padding:24px;background:var(--color-surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md)">
+        <div ref="{{ v.spriteRef }}" style="position:absolute;width:0;height:0;overflow:hidden"></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="tag tag-accent" style="font-weight:600">{{ v.id }}</span>
+          <div style="font-size:18px;font-weight:500">{{ v.title }}</div>
+          <div style="margin-left:auto;display:flex;gap:12px;font-size:13px"><a href="{{ v.file }}" download="{{ v.file }}">{{ v.file }}</a><a href="{{ v.css }}" download="{{ v.css }}">{{ v.css }}</a></div>
+        </div>
+        <div style="position:relative;width:576px;height:576px;border-radius:10px;overflow:hidden;background:var(--sable);box-shadow:0 0 0 1px var(--color-neutral-700)">
+          <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr)">
+              <sc-for list="{{ v.tiles }}" as="t" hint-placeholder-count="64">
+                <svg viewBox="0 0 100 100" style="width:100%;height:100%;display:block"><use href="{{ t }}"></use></svg>
+              </sc-for>
+            </div>
+            <div style="position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);pointer-events:none">
+              <sc-for list="{{ v.objs }}" as="o" hint-placeholder-count="0">
+                <svg viewBox="0 0 100 100" overflow="visible" style="width:100%;height:100%;display:block;overflow:visible;grid-column:{{ o.col }};grid-row:{{ o.row }}"><use href="{{ o.href }}"></use></svg>
+              </sc-for>
+            </div>
+            <sc-if value="{{ marquees }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(to right, rgba(40,22,8,.45) 1.5px, transparent 1.5px),linear-gradient(to bottom, rgba(40,22,8,.45) 1.5px, transparent 1.5px);background-size:12.5% 12.5%"></div>
+            </sc-if>
+            <div style="position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);pointer-events:none">
+              <svg viewBox="0 0 100 100" overflow="visible" style="width:100%;height:100%;display:block;overflow:visible;grid-column:{{ tarta.col }};grid-row:{{ tarta.row }}"><g transform="{{ tarta.transform }}"><use href="{{ v.tartaHref }}"></use></g></svg>
+            </div>
+          </sc-if>
+        </div>
+        <p style="margin:0;font-size:14px;line-height:1.5;color:var(--color-neutral-300);text-wrap:pretty">{{ v.note }}</p>
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <sc-for list="{{ v.groups }}" as="g" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-400)">{{ g.name }}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:10px">
+                <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="5">
+                  <div style="display:flex;flex-direction:column;gap:6px;width:104px">
+                    <div style="width:104px;height:104px;border-radius:8px;overflow:hidden;background:{{ it.bg }}">
+                      <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}">
+                        <svg viewBox="-6 -6 112 112" style="width:100%;height:100%;display:block"><g transform="{{ it.transform }}"><use href="{{ it.href }}"></use></g></svg>
+                      </sc-if>
+                    </div>
+                    <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--color-neutral-300);word-break:break-all">{{ it.label }}</code>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:1280px">
+    <h2 style="margin:0;font-family:var(--font-heading);font-weight:500;font-size:20px">Intégration</h2>
+    <p style="margin:0;color:var(--color-neutral-300);font-size:14px;line-height:1.55;max-width:820px;text-wrap:pretty">Le fichier .svg contient un &lt;svg&gt; caché avec tous les &lt;symbol&gt; en 100×100 ; le fichier .css contient la palette (variables dans :root) et les animations. Collez les deux une fois dans index.html, puis placez chaque case avec &lt;use&gt;. Les animations s'arrêtent avec prefers-reduced-motion.</p>
+    <pre style="margin:0;padding:16px 18px;background:var(--color-surface);border-radius:var(--radius-md);font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.6;color:var(--color-neutral-200);overflow:auto">&lt;!-- sol : case-eau-profonde · case-eau · case-eau-but · case-sable-mouille · case-sable · case-sable-2 · fond-plage (8×8) --&gt;
+&lt;svg view&#x42;ox="0 0 100 100"&gt;&lt;use href="#case-sable"/&gt;&lt;/svg&gt;
+&lt;!-- objets : but · rocher-1 · rocher-2 · rocher-3 · palmier · coquillages · etoile-de-mer · traces-pas --&gt;
+&lt;svg view&#x42;ox="0 0 100 100" overflow="visible"&gt;&lt;use href="#rocher-2"/&gt;&lt;/svg&gt;
+&lt;!-- Tarta (regarde vers le haut) : 0 haut · 90 droite · 180 bas · 270 gauche ; tarta-arrivee = plongeon + ronds dans l'eau --&gt;
+&lt;svg view&#x42;ox="0 0 100 100" overflow="visible"&gt;&lt;g transform="rotate(90 50 50)"&gt;&lt;use href="#tarta"/&gt;&lt;/g&gt;&lt;/svg&gt;</pre>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;etat&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;initial&quot;,&quot;arrivée&quot;],&quot;default&quot;:&quot;initial&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;direction&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;haut&quot;,&quot;droite&quot;,&quot;bas&quot;,&quot;gauche&quot;],&quot;default&quot;:&quot;haut&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;lignes&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;discrètes&quot;,&quot;marquées&quot;],&quot;default&quot;:&quot;discrètes&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { ready: false };
+  spriteRefs = [React.createRef()];
+  componentDidMount() {
+    const pre = (t, p) => t.replace(/id="/g, `id="${p}-`).replace(/href="#/g, `href="#${p}-`).replace(/url\(#/g, `url(#${p}-`).replace(/:root/g, `[data-plage="${p}"]`);
+    const get = f => fetch(f).then(r => r.text());
+    Promise.all(['A'].map(v => Promise.all([get(`tarta-plage-${v}.svg`), get(`tarta-plage-${v}.css`)]).then(([s, c]) => [pre(s, v.toLowerCase()), pre(c, v.toLowerCase())])))
+      .then(arr => {
+        const css = arr.map(x => x[1]).join('\n');
+        let st = document.getElementById('tnp-sprite-css');
+        if (!st) { st = document.createElement('style'); st.id = 'tnp-sprite-css'; document.head.appendChild(st); }
+        st.textContent = css;
+        arr.forEach((x, i) => { const ref = this.spriteRefs[i]; if (ref.current) ref.current.innerHTML = x[0]; });
+        this.setState({ ready: true });
+      });
+  }
+  renderVals() {
+    const etat = this.props.etat ?? 'initial';
+    const dir = this.props.direction ?? 'haut';
+    const rot = { haut: 0, droite: 90, bas: 180, gauche: 270 };
+    const arrivee = etat === 'arrivée';
+    const sol = (r, c) => r === 0 ? 'case-eau-profonde' : r === 1 ? 'case-eau' : r === 2 ? 'case-sable-mouille' : ((r * 5 + c * 3) % 7 < 3 ? 'case-sable-2' : 'case-sable');
+    const objets = [
+      [1, 5, 'but'], [4, 2, 'rocher-1'], [3, 5, 'rocher-3'], [5, 6, 'rocher-2'], [2, 1, 'rocher-2'],
+      [6, 0, 'palmier'], [3, 7, 'palmier'], [7, 6, 'coquillages'], [2, 6, 'etoile-de-mer'], [5, 4, 'traces-pas']
+    ];
+    const tarta = arrivee ? { row: 2, col: 6, transform: 'rotate(0 50 50)' } : { row: 8, col: 3, transform: `rotate(${rot[dir]} 50 50)` };
+    const sandBg = 'var(--sable)';
+    const mk = (p, id, title, note) => {
+      const tiles = [];
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) tiles.push(`#${p}-${sol(r, c)}`);
+      const it = (h, label, bg, deg) => ({ href: `#${p}-${h}`, label: label || h, bg: bg || sandBg, transform: `rotate(${deg || 0} 50 50)` });
+      return {
+        id, p, title, spriteRef: this.spriteRefs[0], note, file: `tarta-plage-${p.toUpperCase()}.svg`, css: `tarta-plage-${p.toUpperCase()}.css`, tiles,
+        objs: objets.map(([r, c, h]) => ({ row: r + 1, col: c + 1, href: `#${p}-${h}` })),
+        tartaHref: `#${p}-${arrivee ? 'tarta-arrivee' : 'tarta'}`,
+        groups: [
+          { name: 'Sol', items: [it('case-eau-profonde'), it('case-eau'), it('case-eau-but'), it('case-sable-mouille'), it('case-sable'), it('case-sable-2')] },
+          { name: 'Obstacles', items: [it('rocher-1'), it('rocher-2'), it('rocher-3')] },
+          { name: 'Tarta', items: [it('tarta', 'tarta · 0°'), it('tarta', 'tarta · 90°', null, 90), it('tarta', 'tarta · 180°', null, 180), it('tarta', 'tarta · 270°', null, 270), it('tarta-arrivee', 'tarta-arrivee', 'var(--eau)')] },
+          { name: 'Décor', items: [it('palmier'), it('coquillages'), it('etoile-de-mer', null, 'var(--sable-mouille)'), it('traces-pas'), it('but', 'but', 'var(--eau)')] }
+        ]
+      };
+    };
+    return {
+      ready: this.state.ready,
+      marquees: (this.props.lignes ?? 'discrètes') === 'marquées',
+      tarta,
+      variants: [
+        mk('a', '1a', 'A · Plat et coloré', 'Aplats saturés, contours francs, ombres décalées sans flou. Lisible même en très petit ; la séparation des cases reste un trait fin.')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
