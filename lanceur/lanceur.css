@@ -1,0 +1,61 @@
+/* Lanceur Tarta-na-Praia — maquette « A · Plage illustrée », scène 1024×768 mise à l'échelle par lanceur.js. */
+@font-face { font-family:"Fredoka"; src:url("../polices/fredoka-latin.woff2") format("woff2"); font-weight:300 700; font-style:normal; font-display:swap; }
+@font-face { font-family:"Nunito"; src:url("../polices/nunito-latin.woff2") format("woff2"); font-weight:200 1000; font-style:normal; font-display:swap; }
+
+:root {
+  --encre:#15361F; --dore:#FFC93C; --creme:#FFF9E6; --turquoise:#22C7C8; --turquoise-clair:#8EE6DD; --mer:#169FC6; --sable:#F7CF73;
+  --vert-tortue:#36A644; --vert-tortue-clair:#74CE57; --vert-tortue-peau:#A9E05E; --corail:#FF8C78; --focus:#0E64B0;
+  --ombre-decalee:rgba(21,54,31,.28);
+}
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; overflow:hidden; background:var(--encre); }
+body { font-family:"Nunito", system-ui, sans-serif; color:var(--encre); }
+button, input { font-family:inherit; }
+
+/* position:fixed : la scène non réduite ne doit pas élargir la page (sinon les navigateurs mobiles dézooment). */
+.scene { position:fixed; left:0; top:0; width:1024px; height:768px; overflow:hidden; transform-origin:0 0; background:#9ADDF7; }
+.decor, .decor > svg { position:absolute; left:0; top:0; width:1024px; height:768px; }
+
+.bandeau { position:absolute; left:192px; top:18px; width:640px; height:100px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--dore); border:4px solid var(--encre); border-radius:50px; box-shadow:0 6px 0 var(--ombre-decalee); text-align:center; }
+.titre { margin:0; font-family:"Fredoka", sans-serif; font-weight:600; font-size:54px; line-height:1; color:var(--encre); }
+.sous-titre { margin:6px 0 0; font-size:24px; font-weight:800; line-height:1; color:var(--encre); }
+
+.mascotte { position:absolute; left:14px; top:418px; width:290px; height:246px; }
+
+.panneau { position:absolute; left:308px; top:134px; width:692px; height:530px; padding:22px 24px; background:#fff; border:4px solid var(--encre); border-radius:34px; box-shadow:0 8px 0 var(--ombre-decalee); }
+.liste { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+.ligne { width:100%; height:86px; display:flex; align-items:center; gap:18px; padding:0 14px; text-align:left; cursor:pointer; color:var(--encre); background:var(--creme); border:3px solid #E6D49B; border-radius:26px; transition:transform .12s, background .12s, box-shadow .12s; }
+.ligne.disponible { background:#E3F8F5; border-color:var(--encre); }
+.ligne:not(:disabled):hover { background:#BFF0EA; border-color:var(--encre); transform:translateX(6px); box-shadow:0 5px 0 var(--ombre-decalee); }
+.ligne:not(:disabled):active { background:var(--turquoise-clair); transform:translateY(3px); box-shadow:none; }
+.ligne:focus-visible { outline:5px solid var(--focus); outline-offset:3px; }
+.ligne:not(:disabled):hover .jouer-fond { fill:var(--vert-tortue); }
+.ligne:not(:disabled):hover .jouer-triangle { fill:#fff; stroke:#fff; }
+.ligne:disabled { cursor:default; background:#F1F3F3; border:3px dashed #BCC6C9; color:#4C5A5F; }
+.ligne:disabled .icone { filter:grayscale(1); opacity:.6; }
+.icone { width:64px; height:64px; flex:none; }
+.jouer { width:56px; height:56px; flex:none; }
+.texte { flex:1; min-width:0; }
+.nom { display:block; font-family:"Fredoka", sans-serif; font-weight:600; font-size:28px; line-height:1.1; }
+.aide { display:block; margin-top:3px; font-size:20px; font-weight:700; line-height:1.2; color:#2F4A3A; }
+.ligne:disabled .aide { color:#4C5A5F; }
+.bientot { flex:none; display:flex; align-items:center; gap:8px; padding:8px 14px; background:#fff; border:2px solid #8E9DA2; border-radius:999px; font-size:20px; font-weight:800; color:#2E3B40; }
+
+.barre { position:absolute; left:24px; right:24px; top:676px; height:84px; display:flex; align-items:center; gap:20px; padding:0 8px 0 22px; background:#fff; border:4px solid var(--encre); border-radius:42px; box-shadow:0 5px 0 var(--ombre-decalee); }
+.date-boite { flex:1; min-width:0; display:flex; align-items:center; gap:12px; }
+.date-boite > svg { flex:none; }
+.date { font-family:"Fredoka", sans-serif; font-weight:500; font-size:24px; line-height:1.1; }
+.langues { flex:none; display:flex; gap:6px; padding:3px; background:#E4F6F3; border:3px solid var(--encre); border-radius:36px; }
+.bouton-langue { width:70px; height:60px; border:0; border-radius:30px; background:transparent; font-family:"Fredoka", sans-serif; font-weight:700; font-size:26px; color:var(--encre); cursor:pointer; }
+.bouton-langue[aria-pressed="true"] { background:var(--encre); color:#fff; }
+.bouton-langue:focus-visible { outline:5px solid var(--focus); outline-offset:2px; }
+.champ { flex:none; display:flex; align-items:center; gap:12px; }
+.champ label { font-family:"Fredoka", sans-serif; font-weight:600; font-size:24px; }
+.champ input { width:250px; height:60px; padding:0 22px; border:3px solid var(--encre); border-radius:30px; background:var(--creme); font-size:22px; font-weight:800; color:var(--encre); }
+.champ input::placeholder { color:#4F6B5B; opacity:1; }
+.champ input:focus-visible { outline:5px solid var(--focus); outline-offset:2px; }
+
+.vagues { animation:vague 9s linear infinite; }
+.vagues-lentes { animation-duration:15s; }
+@keyframes vague { from { transform:translateX(0); } to { transform:translateX(-100px); } }
+@media (prefers-reduced-motion:reduce) { .vagues { animation:none; } .ligne { transition:none; } }
