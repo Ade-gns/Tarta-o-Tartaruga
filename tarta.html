@@ -241,7 +241,7 @@
     "use strict";
     const TEXTES = {
       fr: {
-        titre_jeu:"Tarta na Praia", niveau:"Niveau 1", niveau_2:"Niveau 2", consigne:"Aide Tarta à rejoindre la mer !", indice_titre:"Indice : ", indice_niveau_1:"Utilise la boucle pour avancer plus vite sur le sable.", indice_niveau_2:"Les rochers bloquent le chemin. Essaie avec deux boucles !",
+        titre_jeu:"Tarta na Praia", niveau:"Niveau 1", niveau_2:"Niveau 2", niveau_3:"Niveau 3", niveau_4:"Niveau 4", niveau_5:"Niveau 5", consigne:"Aide Tarta à rejoindre la mer !", indice_titre:"Indice : ", indice_niveau_1:"Utilise la boucle pour avancer plus vite sur le sable.", indice_niveau_2:"Les rochers bloquent le chemin. Essaie avec deux boucles !", indice_niveau_3:"Un escalier ! Mets deux blocs dans la même boucle.", indice_niveau_4:"Le mur de rochers a un seul passage. Trouve-le !", indice_niveau_5:"De grandes marches : essaie une boucle dans une boucle !",
         boite_titre:"Boîte à blocs", boite_explication:"Clique dans une boucle, puis clique sur un bloc pour l’y placer. Tu peux aussi le faire glisser.", programme_titre:"Ton programme", lancer:"Lancer Tarta", recommencer:"Recommencer", effacer_progression:"Effacer la progression", langue:"Langue", langue_fr:"FR", blocs_utilises:"Blocs utilisés : {utilises} / {max}", blocs_utilises_sans_limite:"Blocs utilisés : {utilises}",
         quand_execute:"quand on exécute", nord:"Nord", sud:"Sud", est:"Est", ouest:"Ouest", repeter:"répéter", fois:"fois", ajouter:"Ajouter", niveau_suivant:"Niveau suivant", rejouer:"Rejouer", pied:"Un jeu de programmation par blocs, créé pour jouer hors ligne.",
         succes:"Bravo ! Tarta est dans la mer !", passage_niveau:"Le niveau suivant arrive…", tous_niveaux_termines:"Bravo ! Tu as terminé tous les niveaux !", echec:"Oh non, Tarta n'est pas arrivée à la mer. Essaie encore !", progression_effacee:"Progression effacée.", niveau_debloque:"Niveau terminé !", erreur_langue:"Langue indisponible, retour au français.", retour_index:"Retour à l'accueil", supprimer:"Supprimer", aria_grille:"Plage, grille 8 par 8", aria_bloc:"Bloc {nom}", plage:"Mer"
@@ -283,6 +283,65 @@
         [6,0,"palmier"],[2,2,"etoile-de-mer"],[6,3,"coquillages"],[7,0,"traces-pas"]
       ],
       depart:{ligne:7,colonne:1}, but:{ligne:1,colonne:6}, indice:"indice_niveau_2", titre:"niveau_2"
+    }, {
+      id:"niveau-3",
+      grille:["........","......M.","........","........","........","........","........","S......."],
+      terrain:[
+        ["eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde"],
+        ["eau","eau","eau","eau","eau","eau","objectif","eau"],
+        ["sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"]
+      ],
+      // Deux rangées de rochers en diagonale : seul l'escalier Est, Nord, Est, Nord… mène à la mer.
+      objets:[
+        [6,0,"rocher-1"],[5,1,"rocher-2"],[4,2,"rocher-3"],[3,3,"rocher-1"],[2,4,"rocher-2"],
+        [7,2,"rocher-3"],[6,3,"rocher-1"],[5,4,"rocher-2"],[4,5,"rocher-3"],[3,6,"rocher-1"],
+        [4,0,"palmier"],[6,7,"palmier"],[2,1,"etoile-de-mer"],[7,5,"coquillages"],[5,6,"traces-pas"]
+      ],
+      depart:{ligne:7,colonne:0}, but:{ligne:1,colonne:6}, indice:"indice_niveau_3", titre:"niveau_3"
+    }, {
+      id:"niveau-4",
+      grille:["........",".....M..","........","........","........","........","........",".....S.."],
+      terrain:[
+        ["eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde"],
+        ["eau","eau","eau","eau","eau","objectif","eau","eau"],
+        ["sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"]
+      ],
+      // Un mur de rochers sur la ligne 4, avec un seul passage à gauche : il faut partir vers l'ouest.
+      objets:[
+        [4,1,"rocher-1"],[4,2,"rocher-2"],[4,3,"rocher-3"],[4,4,"rocher-1"],[4,5,"rocher-2"],[4,6,"rocher-3"],[4,7,"rocher-1"],
+        [5,2,"palmier"],[6,7,"palmier"],[2,2,"etoile-de-mer"],[6,3,"coquillages"],[6,5,"traces-pas"]
+      ],
+      depart:{ligne:7,colonne:5}, but:{ligne:1,colonne:5}, indice:"indice_niveau_4", titre:"niveau_4"
+    }, {
+      id:"niveau-5",
+      grille:["........","......M.","........","........","........","........","........","S......."],
+      terrain:[
+        ["eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde","eau-profonde"],
+        ["eau","eau","eau","eau","eau","eau","objectif","eau"],
+        ["sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille","sable-mouille"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"],
+        ["sable","sable","sable","sable","sable","sable","sable","sable"]
+      ],
+      // Un escalier à marches de 2 cases : Est, Est, Nord, Nord, trois fois.
+      objets:[
+        [6,0,"rocher-1"],[6,1,"rocher-2"],[4,2,"rocher-3"],[4,3,"rocher-1"],[2,4,"rocher-2"],[2,5,"rocher-3"],
+        [7,3,"rocher-2"],[6,3,"rocher-3"],[5,5,"rocher-1"],[4,5,"rocher-2"],[3,7,"rocher-3"],[2,7,"rocher-1"],
+        [5,0,"palmier"],[6,6,"palmier"],[2,1,"etoile-de-mer"],[7,6,"coquillages"],[4,0,"traces-pas"]
+      ],
+      depart:{ligne:7,colonne:0}, but:{ligne:1,colonne:6}, indice:"indice_niveau_5", titre:"niveau_5"
     }];
     const directions = { nord:{ligne:-1,colonne:0}, sud:{ligne:1,colonne:0}, est:{ligne:0,colonne:1}, ouest:{ligne:0,colonne:-1} };
     const stockage = "tarta-na-praia-progression";
